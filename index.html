@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CAW Web Viewer — Ethereum (community deployment, read-only)</title>
+<meta name="description" content="Read-only web viewer for the community CAW deployment on Ethereum: timeline, names and profiles, read from public nodes.">
+<script>
+  if (localStorage.getItem("guppy-theme") === "dark") document.documentElement.dataset.theme = "dark";
+</script>
+<style>
+  :root, :root[data-theme="light"] {
+    --bg: #f7f8fa; --card: #ffffff; --text: #14181f; --muted: #5c6572; --line: #e3e6ec;
+    --input-bg: #ffffff; --chip: #eef1f5; --accent: #2563eb; --ok: #1d9e62;
+    --shadow: 0 1px 3px rgba(16,24,40,.06);
+  }
+  :root[data-theme="dark"] {
+    --bg: #000000; --card: #121316; --text: #f2f3f5; --muted: #9aa1ab; --line: #26282e;
+    --input-bg: #0a0a0b; --chip: #1b1d21; --accent: #6ea8ff; --ok: #3ecf8e;
+    --shadow: none;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.6; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 20px 16px 48px; }
+  header.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .brand { font-weight: 800; letter-spacing: .02em; font-size: 20px; }
+  .brand small { display: block; color: var(--muted); font-weight: 600; font-size: 12px; letter-spacing: 0; }
+  .controls { display: flex; gap: 8px; }
+  .controls button { font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 999px; padding: 8px 16px; min-height: 44px; }
+  .statusbar { margin-top: 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .nodechip { display: inline-flex; align-items: center; gap: 8px; background: var(--chip); border-radius: 999px; padding: 5px 14px; font-size: 13px; font-weight: 700; max-width: 100%; }
+  .nodechip .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); flex: none; }
+  .nodechip.on .dot { background: var(--ok); }
+  .nodechip .host { font-weight: 600; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46vw; }
+  .ro-note { margin-top: 12px; background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 12px; padding: 12px 16px; font-size: 14px; box-shadow: var(--shadow); }
+  .ro-note a { color: var(--accent); font-weight: 700; }
+  .ro-badge { display: inline-block; background: var(--accent); color: #fff; border-radius: 999px; padding: 1px 10px; font-size: 12px; font-weight: 800; margin-right: 8px; vertical-align: 1px; }
+  .tabs { display: flex; gap: 8px; margin-top: 20px; }
+  .tabs button { flex: 1; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; border: 1px solid var(--line); background: var(--card); color: var(--muted); border-radius: 12px; padding: 12px; min-height: 48px; }
+  .tabs button.on { color: var(--text); border-color: var(--accent); box-shadow: var(--shadow); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); margin-top: 16px; }
+  .card h2 { font-size: 17px; margin: 0 0 10px; }
+  .card p { color: var(--muted); margin: 0 0 10px; }
+  .card a { color: var(--accent); font-weight: 700; }
+  .post { display: flex; gap: 12px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+  .post:last-child { border-bottom: none; }
+  .avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--chip); flex: none; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; overflow: hidden; }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .post-main { flex: 1; min-width: 0; }
+  .post-head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  .post-head .name { font-weight: 800; cursor: pointer; }
+  .post-head .name:hover { color: var(--accent); }
+  .post-head .meta { color: var(--muted); font-size: 13px; }
+  .tag { display: inline-block; background: var(--chip); border-radius: 999px; padding: 0 8px; font-size: 11px; font-weight: 800; color: var(--muted); }
+  .post-body { white-space: pre-wrap; word-break: break-word; margin-top: 2px; }
+  .post-body a, .mention { color: var(--accent); }
+  .mention { cursor: pointer; font-weight: 600; }
+  .counts { display: flex; gap: 18px; margin-top: 8px; color: var(--muted); font-size: 13px; }
+  .namerow { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .namerow:last-child { border-bottom: none; }
+  .namerow:hover .name { color: var(--accent); }
+  .namerow .name { font-weight: 800; }
+  .namerow .sub { color: var(--muted); font-size: 13px; }
+  .namerow .right { margin-left: auto; text-align: right; color: var(--muted); font-size: 13px; flex: none; }
+  .searchrow { display: flex; gap: 8px; margin-bottom: 6px; }
+  .searchrow input { flex: 1; font: inherit; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--input-bg); color: var(--text); min-height: 48px; }
+  .bigbtn { display: block; width: 100%; margin-top: 16px; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 12px; padding: 13px; min-height: 50px; }
+  .bigbtn:disabled { opacity: .5; cursor: default; }
+  .err { color: #d33; }
+  .stats { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 10px; }
+  .stats .v { font-weight: 800; font-size: 17px; }
+  .stats .k { color: var(--muted); font-size: 12px; }
+  .backbtn { font: inherit; font-weight: 700; cursor: pointer; border: none; background: none; color: var(--accent); padding: 0; font-size: 15px; }
+  footer { margin-top: 36px; color: var(--muted); font-size: 13px; }
+  footer a { color: var(--accent); }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">CAW <span style="color:var(--accent)">Web</span><small id="brandSub"></small></div>
+    <div class="controls">
+      <button id="langToggle" type="button">日本語</button>
+      <button id="themeToggle" type="button">🌙 Dark</button>
+    </div>
+  </header>
+
+  <div class="statusbar">
+    <span class="nodechip" id="nodeChip"><span class="dot"></span><span id="nodeChipLabel"></span><span class="host" id="nodeChipHost"></span></span>
+    <button class="backbtn hidden" id="retryBtn" type="button"></button>
+  </div>
+
+  <div class="ro-note"><span class="ro-badge" id="roBadge"></span><span id="roNote"></span> <a id="appLink" href="https://ql1-infinite42-guppy-histoire.github.io/eth-caw/" target="_blank" rel="noopener"></a></div>
+
+  <div class="tabs" id="tabs">
+    <button id="tabTimeline" type="button" class="on"></button>
+    <button id="tabNames" type="button"></button>
+  </div>
+
+  <main id="view"></main>
+
+  <footer>
+    <p id="footerNote"></p>
+    <p><a href="https://ql1-infinite42-guppy-histoire.github.io/eth-caw/" target="_blank" rel="noopener" id="aboutLink"></a> · <a href="https://ql1-infinite42-guppy-histoire.github.io/eth-caw-transparency/" target="_blank" rel="noopener" id="transparencyLink"></a> · <a href="https://github.com/QL1-Infinite42-Guppy-Histoire/eth-caw-web" target="_blank" rel="noopener">GitHub</a></p>
+  </footer>
+</div>
+
+<script>
+"use strict";
+/* Read-only CAW web viewer.
+   Data comes only from public CAW nodes (GET requests). This page never
+   asks for a signature, a key, or a wallet connection: posting, liking,
+   minting and sending live in the app. */
+var STATIC_NODES_URL = "https://ql1-infinite42-guppy-histoire.github.io/eth-caw/nodes.json";
+var REGISTRY_NODES_URL = "https://eth-caw-registry.nepicobsv.workers.dev/nodes?preset=mainnet";
+var EXPECTED_NETWORK_ID = 1; // Uruk (Base) on this deployment
+
+var STRINGS = {
+  en: {
+    brandSub: "Ethereum · independent community deployment",
+    readOnly: "READ-ONLY",
+    roNote: "This web viewer is read-only. Posting, likes, name minting and sending live in the app.",
+    getApp: "About the app →",
+    timeline: "Timeline", names: "Names",
+    nodeOn: "Node", nodeSearching: "Looking for a public node…",
+    retry: "Retry",
+    noNodeTitle: "No public node is online yet",
+    noNodeBody: "This viewer reads from public CAW nodes run by community members. As soon as the first node comes online, the timeline and names appear here automatically — nothing to set up. Anyone can run a node.",
+    runNode: "How to run a node →",
+    loading: "Loading…", loadMore: "Load more",
+    noPosts: "No posts yet.",
+    feedErr: "Could not load from the node.",
+    replies: "Replies", recaw: "Recaw", likes: "Likes",
+    activeNames: "Names with posts",
+    searchPh: "Search names…",
+    noResults: "No names found.",
+    followers: "Followers", deposit: "Deposited", likesGot: "Likes received",
+    back: "← Back", posts: "Posts",
+    profileErr: "Could not load this profile.",
+    about: "About this deployment", transparency: "Transparency report",
+    footerNote: "An independent community deployment implementing Gilgamesh's published CAW code and manifesto, unmodified. Not an official service. What you see is read from whichever public node answered; every post was signed on-chain by its author.",
+  },
+  jp: {
+    brandSub: "Ethereum・コミュニティによる独立したデプロイ",
+    readOnly: "閲覧専用",
+    roNote: "このWeb版は閲覧専用です。投稿・いいね・名前の発行・送金はアプリからどうぞ。",
+    getApp: "アプリについて →",
+    timeline: "タイムライン", names: "名前",
+    nodeOn: "接続ノード", nodeSearching: "公開ノードを探しています…",
+    retry: "再試行",
+    noNodeTitle: "公開ノードはまだオンラインではありません",
+    noNodeBody: "このビューアは、コミュニティのメンバーが運用する公開ノードから読み取ります。最初のノードが立ち上がると、タイムラインと名前が自動でここに表示されます。設定は要りません。ノードは誰でも運用できます。",
+    runNode: "ノードの運用方法 →",
+    loading: "読み込み中…", loadMore: "もっと見る",
+    noPosts: "まだ投稿がありません。",
+    feedErr: "ノードから読み込めませんでした。",
+    replies: "返信", recaw: "Recaw", likes: "いいね",
+    activeNames: "投稿のある名前",
+    searchPh: "名前を検索…",
+    noResults: "見つかりませんでした。",
+    followers: "フォロワー", deposit: "預け入れ", likesGot: "もらったいいね",
+    back: "← 戻る", posts: "投稿",
+    profileErr: "プロフィールを読み込めませんでした。",
+    about: "このデプロイについて", transparency: "透明性レポート",
+    footerNote: "Gilgamesh の公開した CAW のコードとマニフェストを、無改変でコミュニティが独立にデプロイしたものです。公式サービスではありません。表示内容は応答した公開ノードから読み取ったもので、投稿は各著者がオンチェーンで署名したものです。",
+  },
+};
+
+var lang = "en";
+try { lang = localStorage.getItem("ethcaw-web-lang") === "jp" ? "jp" : "en"; } catch (e) {}
+function t() { return STRINGS[lang]; }
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+function fetchJson(url, timeoutMs) {
+  var ctrl = new AbortController();
+  var timer = setTimeout(function () { ctrl.abort(); }, timeoutMs || 8000);
+  return fetch(url, { signal: ctrl.signal }).then(function (res) {
+    clearTimeout(timer);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return res.json();
+  }).catch(function (e) { clearTimeout(timer); throw e; });
+}
+function fmtTime(iso) {
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleString(lang === "jp" ? "ja-JP" : "en-GB", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+function fmtCaw(weiStr) {
+  if (weiStr == null || weiStr === "") return null;
+  try {
+    var w = BigInt(weiStr);
+    var whole = w / 1000000000000000000n;
+    var frac = w % 1000000000000000000n;
+    if (frac === 0n) return whole.toLocaleString("en-US") + " CAW";
+    var f = Number(w) / 1e18;
+    return f.toLocaleString("en-US", { maximumFractionDigits: 2 }) + " CAW";
+  } catch (e) { return null; }
+}
+function avatarHtml(user) {
+  var url = null;
+  if (user.avatarUrl && /^https?:\/\//.test(user.avatarUrl)) url = user.avatarUrl;
+  else if (user.image && /^https?:\/\//.test(user.image)) url = user.image;
+  else if (user.image && user.image.indexOf("<svg") === 0) url = "data:image/svg+xml;utf8," + encodeURIComponent(user.image);
+  if (url) return '<div class="avatar"><img alt="" src="' + esc(url) + '"></div>';
+  var ch = (user.username || "?").charAt(0).toUpperCase();
+  return '<div class="avatar">' + esc(ch) + "</div>";
+}
+function linkify(text) {
+  var out = esc(text);
+  out = out.replace(/https?:\/\/[^\s<]+/g, function (u) {
+    return '<a href="' + u + '" target="_blank" rel="noopener nofollow">' + u + "</a>";
+  });
+  out = out.replace(/(^|\s)@([a-z0-9_]{2,32})/gi, function (m, pre, name) {
+    return pre + '<span class="mention" data-username="' + name + '">@' + name + "</span>";
+  });
+  return out;
+}
+</script>
+<script>
+"use strict";
+var state = {
+  node: null,
+  discovered: false,
+  view: "timeline",
+  feed: { items: [], cursor: null, done: false, loading: false, error: false },
+  names: { items: null, loading: false, error: false },
+  search: { q: "", items: null, loading: false },
+  profile: null,
+};
+
+function probeNode(url) {
+  var base = url.replace(/\/+$/, "");
+  return fetchJson(base + "/", 5000).then(function (info) {
+    if (info && typeof info.networkId === "number" && info.networkId === EXPECTED_NETWORK_ID) return base;
+    throw new Error("unexpected networkId");
+  });
+}
+function discover() {
+  var forced = null;
+  try { forced = new URLSearchParams(location.search).get("node"); } catch (e) {}
+  var jobs;
+  if (forced) {
+    jobs = [Promise.resolve([forced])];
+  } else {
+    var pick = function (b) {
+      return ((b && b.nodes) || []).map(function (n) { return typeof n === "string" ? n : n.url; });
+    };
+    jobs = [
+      fetchJson(STATIC_NODES_URL, 6000).then(pick).catch(function () { return []; }),
+      fetchJson(REGISTRY_NODES_URL, 6000).then(pick).catch(function () { return []; }),
+    ];
+  }
+  return Promise.all(jobs).then(function (lists) {
+    var seen = {}, urls = [];
+    lists.forEach(function (l) { l.forEach(function (u) { if (u && !seen[u]) { seen[u] = 1; urls.push(u); } }); });
+    if (!urls.length) return null;
+    return new Promise(function (resolve) {
+      var left = urls.length, settled = false;
+      urls.forEach(function (u) {
+        probeNode(u).then(function (ok) {
+          if (!settled) { settled = true; resolve(ok); }
+        }).catch(function () {
+          left -= 1;
+          if (left === 0 && !settled) resolve(null);
+        });
+      });
+    });
+  });
+}
+function api(path) { return fetchJson(state.node + path, 12000); }
+
+function postHtml(item) {
+  var u = item.user || {};
+  var name = u.username ? "@" + u.username : (u.displayName || "#" + (u.tokenId || "?"));
+  var isRecaw = /recaw/i.test(item.action || "");
+  return '<div class="post">' + avatarHtml(u) +
+    '<div class="post-main"><div class="post-head">' +
+    '<span class="name" data-tokenid="' + esc(u.tokenId || "") + '">' + esc(name) + "</span>" +
+    (u.displayName && u.username ? '<span class="meta">' + esc(u.displayName) + "</span>" : "") +
+    '<span class="meta">' + esc(fmtTime(item.timestamp)) + "</span>" +
+    (isRecaw ? '<span class="tag">Recaw</span>' : "") +
+    '</div><div class="post-body">' + linkify(item.content || "") + "</div>" +
+    '<div class="counts"><span>💬 ' + (item.commentCount || 0) + "</span>" +
+    "<span>🔁 " + (item.recawCount || 0) + "</span>" +
+    "<span>♥ " + (item.likeCount || 0) + "</span></div>" +
+    "</div></div>";
+}
+function nameRowHtml(u) {
+  return '<div class="namerow" data-tokenid="' + esc(u.tokenId || "") + '">' + avatarHtml(u) +
+    '<div><div class="name">' + esc(u.username ? "@" + u.username : "#" + u.tokenId) + "</div>" +
+    (u.displayName ? '<div class="sub">' + esc(u.displayName) + "</div>" : "") +
+    '<div class="sub">#' + esc(u.tokenId) + "</div></div>" +
+    '<div class="right"><div>' + (u.followerCount || 0) + " " + esc(t().followers) + "</div>" +
+    "<div>♥ " + (u.likesReceivedCount || 0) + "</div></div></div>";
+}
+
+function noNodeHtml() {
+  return '<div class="card"><h2>' + esc(t().noNodeTitle) + "</h2><p>" + esc(t().noNodeBody) + "</p>" +
+    '<p><a href="https://ql1-infinite42-guppy-histoire.github.io/eth-caw/#run-a-node" target="_blank" rel="noopener">' + esc(t().runNode) + "</a></p></div>";
+}
+function loadingHtml() { return '<div class="card"><p>' + esc(t().loading) + "</p></div>"; }
+
+function renderFeed() {
+  if (state.view !== "timeline") return;
+  var el = document.getElementById("view");
+  if (!state.discovered) { el.innerHTML = loadingHtml(); return; }
+  if (!state.node) { el.innerHTML = noNodeHtml(); return; }
+  var f = state.feed;
+  var html = '<div class="card">';
+  if (f.error && !f.items.length) html += '<p class="err">' + esc(t().feedErr) + "</p>";
+  else if (!f.items.length && !f.loading) html += "<p>" + esc(t().noPosts) + "</p>";
+  else html += f.items.map(postHtml).join("");
+  html += "</div>";
+  if (f.items.length && !f.done) {
+    html += '<button class="bigbtn" id="feedMore" type="button"' + (f.loading ? " disabled" : "") + ">" + esc(f.loading ? t().loading : t().loadMore) + "</button>";
+  }
+  el.innerHTML = html;
+}
+function loadFeed(more) {
+  if (!state.node || state.feed.loading) return;
+  state.feed.loading = true;
+  if (state.view === "timeline") renderFeed();
+  var q = "/api/caws?limit=30" + (more && state.feed.cursor ? "&cursor=" + encodeURIComponent(state.feed.cursor) : "");
+  api(q).then(function (b) {
+    var items = (b && b.items) || [];
+    state.feed.items = more ? state.feed.items.concat(items) : items;
+    state.feed.cursor = (b && b.nextCursor) || null;
+    state.feed.done = !(b && b.nextCursor);
+    state.feed.error = false;
+  }).catch(function () { state.feed.error = true; })
+    .finally(function () { state.feed.loading = false; renderFeed(); });
+}
+
+function renderNames() {
+  if (state.view !== "names") return;
+  var el = document.getElementById("view");
+  if (!state.discovered) { el.innerHTML = loadingHtml(); return; }
+  if (!state.node) { el.innerHTML = noNodeHtml(); return; }
+  var s = state.search;
+  var list = s.q ? s.items : state.names.items;
+  var html = '<div class="card"><div class="searchrow"><input id="nameSearch" type="search" autocomplete="off" placeholder="' +
+    esc(t().searchPh) + '" value="' + esc(s.q) + '"></div>';
+  html += "<h2>" + esc(s.q ? t().searchPh.replace("…", "") : t().activeNames) + "</h2>";
+  if (list === null || s.loading || state.names.loading) html += "<p>" + esc(t().loading) + "</p>";
+  else if (state.names.error && !s.q) html += '<p class="err">' + esc(t().feedErr) + "</p>";
+  else if (!list.length) html += "<p>" + esc(t().noResults) + "</p>";
+  else html += list.map(nameRowHtml).join("");
+  html += "</div>";
+  el.innerHTML = html;
+  var input = document.getElementById("nameSearch");
+  if (input) {
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+    input.addEventListener("input", onSearchInput);
+  }
+}
+var searchTimer = null;
+function onSearchInput(e) {
+  var q = e.target.value.trim();
+  state.search.q = q;
+  if (searchTimer) clearTimeout(searchTimer);
+  if (!q) { state.search.items = null; renderNames(); return; }
+  searchTimer = setTimeout(function () {
+    state.search.loading = true;
+    api("/api/users/search/" + encodeURIComponent(q) + "?limit=15").then(function (b) {
+      state.search.items = (b && (b.users || b)) || [];
+    }).catch(function () { state.search.items = []; })
+      .finally(function () { state.search.loading = false; renderNames(); });
+  }, 350);
+}
+function loadNames() {
+  if (!state.node || state.names.loading || state.names.items !== null) return;
+  state.names.loading = true;
+  api("/api/users/top-followed?limit=20").then(function (b) {
+    state.names.items = Array.isArray(b) ? b : ((b && b.users) || []);
+    state.names.error = false;
+  }).catch(function () { state.names.error = true; state.names.items = []; })
+    .finally(function () { state.names.loading = false; renderNames(); });
+}
+
+function renderProfile() {
+  if (state.view !== "profile" || !state.profile) return;
+  var el = document.getElementById("view");
+  var p = state.profile;
+  var html = '<button class="backbtn" id="profBack" type="button">' + esc(t().back) + "</button>";
+  if (p.loading && !p.user) { el.innerHTML = html + loadingHtml(); return; }
+  if (p.error || !p.user) { el.innerHTML = html + '<div class="card"><p class="err">' + esc(t().profileErr) + "</p></div>"; return; }
+  var u = p.user;
+  var dep = fmtCaw(u.onChainStakeWei);
+  var addr = u.address ? u.address.slice(0, 6) + "…" + u.address.slice(-4) : "";
+  html += '<div class="card"><div class="post" style="border:none;padding:0">' + avatarHtml(u) +
+    '<div class="post-main"><div class="post-head"><span class="name" style="cursor:default">' +
+    esc(u.username ? "@" + u.username : "#" + u.tokenId) + "</span>" +
+    (u.displayName ? '<span class="meta">' + esc(u.displayName) + "</span>" : "") + "</div>" +
+    '<div class="meta" style="color:var(--muted);font-size:13px">#' + esc(u.tokenId) + (addr ? " · " + esc(addr) : "") + "</div>" +
+    '<div class="stats">' +
+    '<span><span class="v">' + (u.followerCount || 0) + '</span><br><span class="k">' + esc(t().followers) + "</span></span>" +
+    '<span><span class="v">' + (dep || "—") + '</span><br><span class="k">' + esc(t().deposit) + "</span></span>" +
+    '<span><span class="v">' + (u.likesReceivedCount || 0) + '</span><br><span class="k">' + esc(t().likesGot) + "</span></span>" +
+    "</div></div></div></div>";
+  html += '<div class="card"><h2>' + esc(t().posts) + "</h2>";
+  if (!p.items.length && !p.postsLoading) html += "<p>" + esc(t().noPosts) + "</p>";
+  else html += p.items.map(postHtml).join("");
+  html += "</div>";
+  if (p.items.length && !p.done) {
+    html += '<button class="bigbtn" id="profMore" type="button"' + (p.postsLoading ? " disabled" : "") + ">" + esc(p.postsLoading ? t().loading : t().loadMore) + "</button>";
+  }
+  el.innerHTML = html;
+}
+function loadProfilePosts(more) {
+  var p = state.profile;
+  if (!p || !p.user || !p.user.username || p.postsLoading) return;
+  p.postsLoading = true;
+  var q = "/api/caws?limit=30&user=" + encodeURIComponent(p.user.username) +
+    (more && p.cursor ? "&cursor=" + encodeURIComponent(p.cursor) : "");
+  api(q).then(function (b) {
+    var items = (b && b.items) || [];
+    p.items = more ? p.items.concat(items) : items;
+    p.cursor = (b && b.nextCursor) || null;
+    p.done = !(b && b.nextCursor);
+  }).catch(function () {})
+    .finally(function () { p.postsLoading = false; renderProfile(); });
+}
+function openProfile(tokenId) {
+  if (!tokenId) return;
+  state.view = "profile";
+  state.profile = { tokenId: tokenId, user: null, items: [], cursor: null, done: false, loading: true, postsLoading: false, error: false };
+  syncTabs();
+  renderProfile();
+  api("/api/users/by-token/" + encodeURIComponent(tokenId)).then(function (b) {
+    state.profile.user = (b && (b.user || b)) || null;
+    if (!state.profile.user) state.profile.error = true;
+  }).catch(function () { state.profile.error = true; })
+    .finally(function () {
+      state.profile.loading = false;
+      renderProfile();
+      loadProfilePosts(false);
+    });
+}
+function openProfileByUsername(username) {
+  api("/api/users/" + encodeURIComponent(username)).then(function (b) {
+    var u = (b && (b.user || b)) || null;
+    if (u && u.tokenId) openProfile(u.tokenId);
+  }).catch(function () {});
+}
+
+function renderChip() {
+  var chip = document.getElementById("nodeChip");
+  var label = document.getElementById("nodeChipLabel");
+  var host = document.getElementById("nodeChipHost");
+  var retry = document.getElementById("retryBtn");
+  if (state.node) {
+    chip.classList.add("on");
+    label.textContent = t().nodeOn;
+    host.textContent = state.node.replace(/^https?:\/\//, "");
+    retry.classList.add("hidden");
+  } else {
+    chip.classList.remove("on");
+    label.textContent = t().nodeSearching;
+    host.textContent = "";
+    retry.textContent = t().retry;
+    if (state.discovered) retry.classList.remove("hidden");
+    else retry.classList.add("hidden");
+  }
+}
+function syncTabs() {
+  document.getElementById("tabTimeline").classList.toggle("on", state.view === "timeline");
+  document.getElementById("tabNames").classList.toggle("on", state.view === "names");
+}
+function renderAll() {
+  renderChip();
+  syncTabs();
+  if (state.view === "timeline") renderFeed();
+  else if (state.view === "names") renderNames();
+  else renderProfile();
+}
+function applyStaticTexts() {
+  document.documentElement.lang = lang === "jp" ? "ja" : "en";
+  document.getElementById("brandSub").textContent = t().brandSub;
+  document.getElementById("roBadge").textContent = t().readOnly;
+  document.getElementById("roNote").textContent = t().roNote;
+  document.getElementById("appLink").textContent = t().getApp;
+  document.getElementById("tabTimeline").textContent = t().timeline;
+  document.getElementById("tabNames").textContent = t().names;
+  document.getElementById("footerNote").textContent = t().footerNote;
+  document.getElementById("aboutLink").textContent = t().about;
+  document.getElementById("transparencyLink").textContent = t().transparency;
+  document.getElementById("langToggle").textContent = lang === "jp" ? "EN" : "日本語";
+  var dark = document.documentElement.dataset.theme === "dark";
+  document.getElementById("themeToggle").textContent = dark ? (lang === "jp" ? "☀️ 白背景" : "☀️ Light") : (lang === "jp" ? "🌙 黒背景" : "🌙 Dark");
+}
+
+document.getElementById("langToggle").addEventListener("click", function () {
+  lang = lang === "jp" ? "en" : "jp";
+  try { localStorage.setItem("ethcaw-web-lang", lang); } catch (e) {}
+  applyStaticTexts();
+  renderAll();
+});
+document.getElementById("themeToggle").addEventListener("click", function () {
+  var rootEl = document.documentElement;
+  if (rootEl.dataset.theme === "dark") { delete rootEl.dataset.theme; try { localStorage.removeItem("guppy-theme"); } catch (e) {} }
+  else { rootEl.dataset.theme = "dark"; try { localStorage.setItem("guppy-theme", "dark"); } catch (e) {} }
+  applyStaticTexts();
+});
+document.getElementById("tabTimeline").addEventListener("click", function () {
+  state.view = "timeline"; syncTabs(); renderFeed();
+});
+document.getElementById("tabNames").addEventListener("click", function () {
+  state.view = "names"; syncTabs(); renderNames(); loadNames();
+});
+document.getElementById("retryBtn").addEventListener("click", function () { boot(); });
+document.getElementById("view").addEventListener("click", function (e) {
+  var more = e.target.closest("#feedMore");
+  if (more) { loadFeed(true); return; }
+  var pmore = e.target.closest("#profMore");
+  if (pmore) { loadProfilePosts(true); return; }
+  if (e.target.closest("#profBack")) {
+    state.view = "timeline"; syncTabs(); renderFeed(); return;
+  }
+  var mention = e.target.closest(".mention");
+  if (mention) { openProfileByUsername(mention.getAttribute("data-username")); return; }
+  var named = e.target.closest("[data-tokenid]");
+  if (named) openProfile(named.getAttribute("data-tokenid"));
+});
+
+function boot() {
+  state.node = null;
+  state.discovered = false;
+  state.feed = { items: [], cursor: null, done: false, loading: false, error: false };
+  state.names = { items: null, loading: false, error: false };
+  renderAll();
+  discover().then(function (node) {
+    state.node = node;
+    state.discovered = true;
+    renderAll();
+    if (node) {
+      loadFeed(false);
+      if (state.view === "names") loadNames();
+    }
+  });
+}
+applyStaticTexts();
+boot();
+// While no node is online, keep looking quietly — the first node to come
+// up fills this page automatically.
+setInterval(function () {
+  if (!state.node && state.discovered) {
+    discover().then(function (node) {
+      if (node) {
+        state.node = node;
+        renderAll();
+        loadFeed(false);
+        if (state.view === "names") loadNames();
+      }
+    });
+  }
+}, 60000);
+</script>
+</body>
+</html>
