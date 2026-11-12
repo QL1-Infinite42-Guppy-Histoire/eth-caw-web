@@ -234,7 +234,7 @@ var state = {
 
 function probeNode(url) {
   var base = url.replace(/\/+$/, "");
-  return fetchJson(base + "/", 5000).then(function (info) {
+  return fetchJson(base + "/api/instances", 5000).then(function (info) {
     if (info && typeof info.networkId === "number" && info.networkId === EXPECTED_NETWORK_ID) return base;
     throw new Error("unexpected networkId");
   });
