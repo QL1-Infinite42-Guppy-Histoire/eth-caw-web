@@ -57,7 +57,7 @@
   .nodebox .host { font-weight: 700; color: var(--text); word-break: break-all; }
   .nodebox .retry { color: var(--accent); font-weight: 700; padding: 0; font-size: 13px; }
   .side-controls { display: flex; gap: 6px; margin-top: 12px; }
-  .side-controls button { font-size: 13px; font-weight: 700; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 6px 13px; }
+  .side-controls button { font-size: 13px; font-weight: 700; color: var(--text); border: 1px solid var(--border); border-radius: 999px; padding: 6px 13px; }
   .side-controls button:hover { background: var(--hover); color: var(--text); }
 
   /* ---------- center column ---------- */
@@ -70,6 +70,14 @@
   .backbtn:hover { background: var(--hover); }
   .backbtn.show { display: flex; }
   .backbtn svg { width: 20px; height: 20px; }
+  /* Header language/theme controls: shown exactly where the sidebar
+     text controls disappear (<=1279px), so switching never needs a
+     wallet, a node, or opening the drawer first. */
+  .hdr-controls { display: none; margin-left: auto; align-items: center; gap: 8px; flex: none; }
+  .langseg { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+  .langseg button { font-size: 12.5px; font-weight: 700; color: var(--muted); padding: 5px 10px; }
+  .langseg button.on { background: var(--text); color: var(--bg); }
+  .hdr-theme { font-size: 12.5px; font-weight: 700; color: var(--text); border: 1px solid var(--border); border-radius: 999px; padding: 5px 11px; }
 
   .ro-card { margin: 12px 16px; background: var(--card-bg); border-radius: 16px; padding: 14px 16px; font-size: 14px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
   .ro-badge { background: var(--accent); color: #fff; border-radius: 999px; padding: 1px 10px; font-size: 12px; font-weight: 800; flex: none; }
@@ -295,12 +303,15 @@
   .dnav a:hover { background: var(--hover); text-decoration: none; }
   .dnav a.on { font-weight: 800; }
   .dnav svg { width: 26px; height: 26px; flex: none; }
-  .drawer-controls { margin-top: auto; padding-top: 16px; }
+  .drawer-controls { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--border); flex-direction: column; align-items: stretch; gap: 8px; }
+  .drawer-settings-cap { font-size: 13px; font-weight: 800; color: var(--muted); padding: 0 2px; }
+  .drawer-controls button { text-align: left; font-size: 14px; padding: 9px 14px; }
   @media (max-width: 1279px) {
     .shell { grid-template-columns: 72px minmax(0,600px) 320px; column-gap: 12px; max-width: 1030px; }
     .sidebar { padding: 6px 6px 16px; align-items: center; }
     .snav a { padding: 12px; gap: 0; }
     .snav .lbl, .logo-word, .getapp, .nodebox .txt, .side-controls { display: none; }
+    .hdr-controls { display: flex; }
     .side-bottom { padding: 14px 0 0; }
     .nodebox { justify-content: center; }
   }
@@ -352,6 +363,10 @@
       <button class="drawer-btn" id="drawerBtn" type="button" aria-label="Menu"><img src="assets/logo.jpg" alt=""></button>
       <button class="backbtn" id="backBtn" type="button" aria-label="Back"><span data-icon="back"></span></button>
       <span class="ttl" id="centerTitle"></span>
+      <div class="hdr-controls">
+        <span class="langseg"><button type="button" id="langEnH">EN</button><button type="button" id="langJpH">日本語</button></span>
+        <button class="hdr-theme" id="themeToggleH" type="button"></button>
+      </div>
     </div>
     <div id="view"></div>
   </main>
@@ -406,6 +421,7 @@
   </nav>
   <div id="drawerSession"></div>
   <div class="side-controls drawer-controls">
+    <div class="drawer-settings-cap" id="drawerSettingsCap"></div>
     <button id="langToggleD" type="button">日本語</button>
     <button id="themeToggleD" type="button"></button>
   </div>
@@ -432,6 +448,7 @@ var STRINGS = {
     home: "Home", explore: "Explore", bookmarks: "Bookmarks",
     openApp: "Open the app", getAppBtn: "Get the app",
     viewingBadge: "VIEWING",
+    settings: "Settings",
     getApp: "About the app →",
     nodeOn: "Node", network: "Network", nodeSearching: "Looking for a public node…",
     retry: "Retry",
@@ -546,6 +563,7 @@ var STRINGS = {
     home: "ホーム", explore: "検索", bookmarks: "ブックマーク",
     openApp: "アプリを開く", getAppBtn: "アプリを入手",
     viewingBadge: "閲覧モード",
+    settings: "設定",
     getApp: "アプリについて →",
     nodeOn: "接続ノード", network: "ネットワーク", nodeSearching: "公開ノードを探しています…",
     retry: "再試行",
@@ -2444,17 +2462,23 @@ function applyStaticTexts() {
   document.getElementById("dNavOpenApp").textContent = t().openApp;
   document.getElementById("langToggleD").textContent = lang === "jp" ? "EN" : "日本語";
   document.getElementById("themeToggleD").textContent = dark ? (lang === "jp" ? "白背景" : "Light") : (lang === "jp" ? "黒背景" : "Dark");
+  document.getElementById("langEnH").classList.toggle("on", lang === "en");
+  document.getElementById("langJpH").classList.toggle("on", lang === "jp");
+  document.getElementById("themeToggleH").textContent = dark ? (lang === "jp" ? "白背景" : "Light") : (lang === "jp" ? "黒背景" : "Dark");
+  document.getElementById("drawerSettingsCap").textContent = t().settings;
 }
 
 /* ---------- events ---------- */
-function doToggleLang() {
-  lang = lang === "jp" ? "en" : "jp";
+function setLang(l) {
+  if (l !== "en" && l !== "jp") return;
+  lang = l;
   try { localStorage.setItem("ethcaw-web-lang", lang); } catch (e) {}
   applyStaticTexts();
   applyRoute();
   renderRailNames();
   renderSessionUI();
 }
+function doToggleLang() { setLang(lang === "jp" ? "en" : "jp"); }
 function doToggleTheme() {
   var rootEl = document.documentElement;
   if (rootEl.dataset.theme === "dark") { delete rootEl.dataset.theme; try { localStorage.removeItem("guppy-theme"); } catch (e) {} }
@@ -2465,6 +2489,9 @@ document.getElementById("langToggle").addEventListener("click", doToggleLang);
 document.getElementById("langToggleD").addEventListener("click", doToggleLang);
 document.getElementById("themeToggle").addEventListener("click", doToggleTheme);
 document.getElementById("themeToggleD").addEventListener("click", doToggleTheme);
+document.getElementById("langEnH").addEventListener("click", function () { setLang("en"); });
+document.getElementById("langJpH").addEventListener("click", function () { setLang("jp"); });
+document.getElementById("themeToggleH").addEventListener("click", doToggleTheme);
 function openDrawer() {
   document.getElementById("drawer").classList.add("open");
   document.getElementById("drawer").setAttribute("aria-hidden", "false");
