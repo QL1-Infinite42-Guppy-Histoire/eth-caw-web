@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CAW Web Viewer — Ethereum (community deployment)</title>
-<meta name="description" content="Web viewer for the community CAW deployment on Ethereum: timeline, names and profiles from public nodes; connect MetaMask to post, like and recaw.">
+<meta name="description" content="Web viewer for the community CAW deployment on Ethereum: timeline, names and profiles from public nodes; connect MetaMask to post, like, recaw and mint a name.">
 <link rel="icon" type="image/jpeg" href="assets/logo.jpg">
 <script>
   if (localStorage.getItem("guppy-theme") === "dark") document.documentElement.dataset.theme = "dark";
@@ -241,6 +241,34 @@
   .manual-url { width: 100%; margin-top: 8px; }
   .mirror-card .row-actions { margin-top: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .postbtn.sm { padding: 7px 16px; font-size: 14px; }
+  /* ---------- mint a name ---------- */
+  .mint-card { margin: 12px 16px; background: var(--card-bg); border-radius: 16px; padding: 16px; }
+  .mint-card h3 { font-size: 19px; font-weight: 800; margin: 0 0 8px; }
+  .mint-name-row { display: flex; align-items: center; gap: 4px; border: 1px solid var(--border-strong); background: var(--bg); border-radius: 12px; padding: 4px 12px; margin-top: 10px; }
+  .mint-name-row:focus-within { border-color: var(--accent); }
+  .mint-at { color: var(--muted); font-size: 18px; font-weight: 700; flex: none; }
+  .mint-name-row input { flex: 1; min-width: 0; border: none; background: none; color: var(--text); font: inherit; font-size: 18px; outline: none; padding: 8px 0; }
+  .mint-status { font-size: 14.5px; margin-top: 12px; line-height: 1.5; }
+  .mint-status.ok { color: var(--recaw); font-weight: 700; }
+  .mint-status.bad { color: #f4212e; }
+  .qrows { margin-top: 10px; }
+  .qrow { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 7px 0; border-bottom: 1px dashed var(--border-strong); font-size: 14px; }
+  .qrow .qk { color: var(--muted); }
+  .qrow .qv { font-weight: 700; text-align: right; white-space: nowrap; }
+  .qnote { font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+  .postbtn.block { display: block; width: 100%; margin-top: 14px; padding: 12px 22px; font-size: 16px; }
+  .ghostbtn.block { display: block; width: 100%; margin-top: 10px; padding: 11px 16px; text-align: center; }
+  .mint-done { text-align: center; padding: 10px 0 4px; }
+  .mint-done .big { font-size: 34px; }
+  .mint-done .dname { font-size: 24px; font-weight: 800; margin-top: 6px; word-break: break-all; }
+  .mint-steps { margin-top: 12px; font-size: 14.5px; display: flex; flex-direction: column; gap: 6px; }
+  .mint-steps .mstep { display: flex; gap: 9px; align-items: center; color: var(--muted); }
+  .mint-steps .mstep .sdot { width: 9px; height: 9px; border-radius: 50%; background: var(--border-strong); flex: none; }
+  .mint-steps .mstep.on { color: var(--text); font-weight: 700; }
+  .mint-steps .mstep.on .sdot { background: var(--accent); }
+  .mint-steps .mstep.done { color: var(--muted); }
+  .mint-steps .mstep.done .sdot { background: var(--recaw); }
+
   .mirror-item { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
   .mirror-item.hl { background: var(--tint-blue); }
   .mi-text { white-space: pre-wrap; word-break: break-word; font-size: 15px; line-height: 20px; }
@@ -300,6 +328,7 @@
       <a href="#/explore" data-nav="explore"><span data-icon="search"></span><span class="lbl" id="navExplore"></span></a>
       <a href="#/bookmarks" data-nav="bookmarks"><span data-icon="bookmark"></span><span class="lbl" id="navBookmarks"></span></a>
       <a href="#/mirror" data-nav="mirror"><span data-icon="mirror"></span><span class="lbl" id="navMirror"></span></a>
+      <a href="#/mint" data-nav="mint"><span data-icon="tag"></span><span class="lbl" id="navMint"></span></a>
       <a href="https://ql1-infinite42-guppy-histoire.github.io/eth-caw/" target="_blank" rel="noopener"><span data-icon="smartphone"></span><span class="lbl" id="navOpenApp"></span></a>
     </nav>
     <a class="getapp" href="https://ql1-infinite42-guppy-histoire.github.io/eth-caw/" target="_blank" rel="noopener" id="getAppBtn"></a>
@@ -370,6 +399,7 @@
     <a href="#/explore" data-nav="explore"><span data-icon="search"></span><span class="lbl" id="dNavExplore"></span></a>
     <a href="#/bookmarks" data-nav="bookmarks"><span data-icon="bookmark"></span><span class="lbl" id="dNavBookmarks"></span></a>
     <a href="#/mirror" data-nav="mirror"><span data-icon="mirror"></span><span class="lbl" id="dNavMirror"></span></a>
+    <a href="#/mint" data-nav="mint"><span data-icon="tag"></span><span class="lbl" id="dNavMint"></span></a>
     <a href="https://ql1-infinite42-guppy-histoire.github.io/eth-caw/" target="_blank" rel="noopener"><span data-icon="smartphone"></span><span class="lbl" id="dNavOpenApp"></span></a>
   </nav>
   <div id="drawerSession"></div>
@@ -386,8 +416,9 @@
    connect a wallet get the read-only experience. Connected visitors
    sign with MetaMask only (personal_sign session + EIP-712 actions,
    mirroring the app's protocol client) — this page never sees, asks
-   for, or stores a private key or seed phrase. Minting and sending
-   live in the app. Bookmarks live in this browser only. */
+   for, or stores a private key or seed phrase. Name minting mirrors
+   the app's L1 flow (CawProfileMinter) as MetaMask transactions.
+   Bookmarks live in this browser only. */
 var STATIC_NODES_URL = "https://ql1-infinite42-guppy-histoire.github.io/eth-caw/nodes.json";
 var REGISTRY_NODES_URL = "https://eth-caw-registry.nepicobsv.workers.dev/nodes?preset=mainnet";
 var EXPECTED_NETWORK_ID = 1; // Uruk (Base) on this deployment
@@ -419,7 +450,7 @@ var STRINGS = {
     noResults: "No names found.",
     namesToExplore: "Names to explore", viewBtn: "View",
     aboutTitle: "About this viewer",
-    aboutBody: "A read-only viewer for the community CAW deployment on Ethereum. Every post was signed on-chain by its author and is read here from whichever public node answered. To post, like or mint a name, use the app.",
+    aboutBody: "A viewer for the community CAW deployment on Ethereum. Every post was signed on-chain by its author and is read here from whichever public node answered. Connect MetaMask to post, like and recaw — you can also mint a name on this page.",
     about: "About this deployment", transparency: "Transparency report", namesDir: "Name directory",
     bookmarksNote: "Bookmarks are stored only in this browser.",
     bookmarksEmpty: "No bookmarks yet. Use the bookmark icon on any post to save it here.",
@@ -438,10 +469,11 @@ var STRINGS = {
     costFmt: "Post cost {C} CAW + tip {T} CAW, paid from your name's deposited CAW",
     replyCostFmt: "Reply cost {C} CAW + tip {T} CAW, paid from your name's deposited CAW",
     indexingNote: "The node is still indexing this wallet's names. Wait a moment, then retry.",
-    noNamesNote: "This wallet owns no CAW names, so it cannot post. Connect the wallet that holds your name — names are minted in the app.",
+    noNamesNote: "This wallet owns no CAW names, so it cannot post. Connect the wallet that holds your name — or mint a name on this page (Mint a name, in the menu) or in the app.",
     verifyFailed: "Verification failed.",
-    noNameNote: "This wallet owns no CAW name yet. A name is needed to post — minting is done in the app.",
+    noNameNote: "This wallet owns no CAW name yet. A name is needed to post — mint one on this page or in the app.",
     getName: "About minting a name →",
+    mintHere: "Mint a name on this page →",
     actFailed: "The action could not be submitted.",
     actUnavailable: "This node's feed does not include the data this action needs.",
     postedOk: "Submitted — a validator will deliver it on-chain.",
@@ -472,6 +504,39 @@ var STRINGS = {
     mirrorLoadErr: "Could not load the inbox.",
     mirrorReload: "Reload",
     sourceLink: "Source ↗",
+    navMint: "Mint a name",
+    mintTitle: "Get a name",
+    mintIntro: "Names are issued as NFTs on Ethereum. No node is needed — this page talks to the contracts directly from your MetaMask wallet.",
+    mintNeedConnect: "Connect MetaMask to mint a name. Minting runs on Ethereum (L1) and needs no node.",
+    mintNeedMainnet: "MetaMask is not on Ethereum mainnet. Name minting happens on Ethereum (L1) — switch networks to continue.",
+    mintSwitchBtn: "Switch to Ethereum",
+    mintNamePh: "Desired name (lowercase, digits, _)",
+    mintChecking: "Checking on-chain…",
+    mintInvalid: "This name cannot be used (check allowed characters and length)",
+    mintTaken: "@{name} is already taken (tokenId {id})",
+    mintAvailable: "@{name} is available",
+    mintBurnLabel: "Name cost (burned)",
+    mintDepositLabel: "Deposit (becomes your balance for posting)",
+    mintFeeLabel: "Sync fee to Base (ETH)",
+    mintFeeNote: "(you pay a little extra; the excess is refunded)",
+    mintYourCaw: "Your CAW",
+    mintYourEth: "Your ETH",
+    mintCawShort: "Not enough CAW — you need {n} in total.",
+    mintEthShort: "Not enough ETH for the sync fee (about {n} ETH needed).",
+    mintBtn: "Get this name",
+    mintStepApproving: "Approving…",
+    mintStepMinting: "Minting…",
+    mintStepConfirming: "Confirming…",
+    mintSteps: "Steps",
+    mintNote: "Two signatures: approve CAW, then mint. A minted name cannot be cancelled.",
+    mintDoneName: "You got the name (tokenId {id})",
+    mintDoneNote: "The name syncs to Base via LayerZero in a few minutes, and the node then indexes it. When that finishes, press “Connect MetaMask” in the sidebar — you can then post with this name.",
+    mintAnother: "Get another name",
+    mintRejected: "Cancelled in MetaMask.",
+    mintFailed: "Minting failed. Please retry.",
+    mintCheckErr: "Could not check the name on-chain. Please retry.",
+    mintReverted: "The transaction was reverted on-chain.",
+    mintTxLink: "View transaction ↗",
   },
   jp: {
     brandSub: "Ethereum・コミュニティ版",
@@ -498,7 +563,7 @@ var STRINGS = {
     noResults: "見つかりませんでした。",
     namesToExplore: "おすすめの名前", viewBtn: "見る",
     aboutTitle: "このビューアについて",
-    aboutBody: "Ethereum 上のコミュニティ版 CAW のための、読み取り専用ビューアです。投稿は各著者がオンチェーンで署名したもので、応答した公開ノードから読み取っています。投稿・いいね・名前の発行はアプリからどうぞ。",
+    aboutBody: "Ethereum 上のコミュニティ版 CAW のビューアです。投稿は各著者がオンチェーンで署名したものを、応答した公開ノードから読み取っています。MetaMaskを接続すると投稿・いいね・Recawができ、このページで名前の発行もできます。",
     about: "このデプロイについて", transparency: "透明性レポート", namesDir: "名前一覧",
     bookmarksNote: "ブックマークはこのブラウザ内にだけ保存されます。",
     bookmarksEmpty: "まだブックマークがありません。投稿のブックマークアイコンを押すと、ここに保存されます。",
@@ -517,10 +582,11 @@ var STRINGS = {
     costFmt: "投稿コスト {C} CAW + チップ {T} CAW（名前の預け入れCAWから支払われます）",
     replyCostFmt: "返信コスト {C} CAW + チップ {T} CAW（名前の預け入れCAWから支払われます）",
     indexingNote: "ノードがこのウォレットの名前を索引中です。少し待ってから再試行してください。",
-    noNamesNote: "このウォレットはCAWの名前を持っていないため投稿できません。名前を持つウォレットで接続してください（名前の発行はアプリで行います）",
+    noNamesNote: "このウォレットはCAWの名前を持っていないため投稿できません。名前を持つウォレットで接続するか、メニューの「名前を発行」からこのページで、またはアプリで発行してください。",
     verifyFailed: "認証に失敗しました。",
-    noNameNote: "このウォレットはまだ CAW の名前を持っていません。投稿には名前が必要です。名前の発行はアプリからどうぞ。",
+    noNameNote: "このウォレットはまだ CAW の名前を持っていません。投稿には名前が必要です。このページかアプリで発行できます。",
     getName: "名前の発行について →",
+    mintHere: "このページで名前を発行 →",
     actFailed: "アクションを送信できませんでした。",
     actUnavailable: "このノードのフィードには、このアクションに必要なデータが含まれていません。",
     postedOk: "送信しました。バリデータがオンチェーンへ届けます。",
@@ -551,6 +617,39 @@ var STRINGS = {
     mirrorLoadErr: "受信箱を読み込めませんでした。",
     mirrorReload: "再読み込み",
     sourceLink: "元の投稿 ↗",
+    navMint: "名前を発行",
+    mintTitle: "名前を取る",
+    mintIntro: "名前は Ethereum 上の NFT として発行されます。ノードは不要で、このページが MetaMask から直接手続きします。",
+    mintNeedConnect: "名前の発行には MetaMask の接続が必要です。発行は Ethereum（L1）で、ノードは要りません。",
+    mintNeedMainnet: "MetaMask が Ethereum メインネットに接続されていません。名前の発行は Ethereum（L1）で行います。ネットワークを切り替えてください。",
+    mintSwitchBtn: "Ethereumに切り替え",
+    mintNamePh: "ほしい名前（英小文字・数字・_）",
+    mintChecking: "チェーンで確認しています…",
+    mintInvalid: "この名前は使えません（使える文字・長さを確認してください）",
+    mintTaken: "@{name} はすでに取得されています（tokenId {id}）",
+    mintAvailable: "@{name} は取得できます",
+    mintBurnLabel: "名前の費用（燃焼）",
+    mintDepositLabel: "預け入れ（投稿に使う残高になります）",
+    mintFeeLabel: "Base への同期手数料（ETH）",
+    mintFeeNote: "（多めに払って余りは戻ります）",
+    mintYourCaw: "あなたの CAW",
+    mintYourEth: "あなたの ETH",
+    mintCawShort: "CAW が足りません（合計で {n} 必要です）。",
+    mintEthShort: "同期手数料の ETH が足りません（約 {n} ETH 必要です）。",
+    mintBtn: "この名前を取る",
+    mintStepApproving: "承認しています…",
+    mintStepMinting: "発行しています…",
+    mintStepConfirming: "確認中です…",
+    mintSteps: "手順",
+    mintNote: "手続きは「CAW の承認 → 発行」の2回の署名で進みます。発行した名前は取り消せません。",
+    mintDoneName: "名前を取得しました（tokenId {id}）",
+    mintDoneNote: "Base への同期は数分で完了し、その後ノードが名前を索引します。終わったらサイドバーの「MetaMaskを接続」から接続すると、この名前で投稿できます。",
+    mintAnother: "別の名前も取る",
+    mintRejected: "MetaMask でキャンセルされました。",
+    mintFailed: "発行に失敗しました。もう一度お試しください。",
+    mintCheckErr: "チェーンで名前を確認できませんでした。再試行してください。",
+    mintReverted: "トランザクションがチェーン上で失敗しました（revert）。",
+    mintTxLink: "トランザクションを見る ↗",
   },
 };
 
@@ -585,6 +684,7 @@ var ICON_PATHS = {
   heart: '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>',
   views: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
   mirror: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  tag: '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>',
 };
 function icon(name, filled) {
   return '<svg viewBox="0 0 24 24" fill="' + (filled ? "currentColor" : "none") + '" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON_PATHS[name] + "</svg>";
@@ -730,6 +830,11 @@ var CAW_ACTIONS_L2 = "0xf4dFCf0EF472E8aaD3783479051f61EC574C6A8E"; // preset.caw
 var L2_RPC_URL = "https://mainnet.base.org"; // preset.l2RpcUrl
 var L1_RPC_URL = "https://ethereum-rpc.publicnode.com";
 var CAW_PROFILE_L1 = "0xa3700808e1c62E989fbf5CE15312d79d1475bDb4"; // CawProfile (name NFTs) on Ethereum L1
+var CAW_TOKEN_L1 = "0xf3b9569F82B18aEf890De263B84189bd33EBe452"; // preset.cawTokenL1
+var CAW_MINTER_L1 = "0xf219DA7aF9249322D4E982dc49FcE6251bCE0d22"; // preset.cawProfileMinterL1
+var CAW_QUOTER_L1 = "0x4baBf4136707d6f4C096ea447Ec3285Cc2AF7235"; // preset.cawProfileQuoterL1
+var LZ_DEST_EID = 30184; // preset.lzDestEid (Base)
+var MINT_DEPOSIT_WEI = 1000000000000000000000000n; // config.ts MINT_DEPOSIT_CAW = 1,000,000 CAW
 var BALANCE_OF_SELECTOR = "0x70a08231"; // balanceOf(address)
 var ACTION_DOMAIN = { name: "Caw Protocol", version: "1", chainId: L2_CHAIN_ID, verifyingContract: CAW_ACTIONS_L2 }; // config.ts actionDomain()
 var ACTION_TYPES = { // config.ts ACTION_TYPES — exact field list
@@ -995,7 +1100,7 @@ function sessInnerHtml() {
     return h;
   }
   if (!hasName()) {
-    return '<p class="sess-note">' + esc(t().noNameNote) + ' <a href="' + INTRO_URL + '" target="_blank" rel="noopener">' + esc(t().getName) + "</a></p>" +
+    return '<p class="sess-note">' + esc(t().noNameNote) + ' <a href="#/mint">' + esc(t().mintHere) + '</a> <a href="' + INTRO_URL + '" target="_blank" rel="noopener">' + esc(t().getName) + "</a></p>" +
       '<div class="sess-actions"><button type="button" class="ghostbtn" data-disconnect>' + esc(t().disconnect) + "</button></div>";
   }
   var u = sessUser || { tokenId: senderId() };
@@ -1057,6 +1162,7 @@ function refreshView() {
   else if (r.name === "thread") renderThread();
   else if (r.name === "profile") renderProfile();
   else if (r.name === "mirror") renderMirror();
+  else if (r.name === "mint") renderMint();
 }
 
 /* ---------- compose (home) + reply (thread) ---------- */
@@ -1225,6 +1331,426 @@ function onRecawAct(btn) {
   }).catch(function (e) {
     showToast((e && e.message) || t().actFailed);
   }).finally(function () { delete btn.dataset.busy; });
+}
+
+/* =====================================================================
+   Name minting — a direct mirror of the app's L1 flow
+   (eth-caw-app/src/lib/mint.ts + src/screens/Mint.tsx). Plain L1
+   transactions via MetaMask; no CAW node is involved. All amounts are
+   read live from CawProfileMinter / CawProfileQuoter at click time.
+   The ABI codec below is hand-rolled (no ethers) and byte-verified
+   against calldata produced by the app's ethers (20 vectors).
+   ===================================================================== */
+var SEL_IS_VALID_USERNAME = "0x3b032005"; // isValidUsername(string)
+var SEL_ID_BY_USERNAME = "0x9ebf19e8"; // idByUsername(string)
+var SEL_COST_OF_NAME = "0x8c87aa8a"; // costOfName(string)
+var SEL_MINT_AND_DEPOSIT = "0x6ebcb554"; // mintAndDeposit(uint32,string,uint256,uint32,uint256)
+var SEL_MINT_QUOTE = "0x66f05973"; // mintAndDepositQuote(uint32,uint256,uint32,bool)
+var SEL_ALLOWANCE = "0xdd62ed3e"; // allowance(address,address)
+var SEL_APPROVE = "0x095ea7b3"; // approve(address,uint256)
+function abiWord(v) { return BigInt(v).toString(16).padStart(64, "0"); }
+function abiAddr(a) { return String(a).replace(/^0x/i, "").toLowerCase().padStart(64, "0"); }
+function abiBytesHex(b) {
+  var h = "";
+  for (var i = 0; i < b.length; i++) h += b[i].toString(16).padStart(2, "0");
+  return h;
+}
+function abiStringTail(s) {
+  var b = new TextEncoder().encode(s);
+  var data = abiBytesHex(b);
+  var pad = (64 - (data.length % 64)) % 64;
+  return abiWord(b.length) + data + "0".repeat(pad);
+}
+function abiStringArg(s) { return abiWord(32) + abiStringTail(s); } // lone dynamic arg
+function callIsValidUsername(name) { return SEL_IS_VALID_USERNAME + abiStringArg(name); }
+function callIdByUsername(name) { return SEL_ID_BY_USERNAME + abiStringArg(name); }
+function callCostOfName(name) { return SEL_COST_OF_NAME + abiStringArg(name); }
+function callMintQuote(depositWei) {
+  return SEL_MINT_QUOTE + abiWord(CAW_NETWORK_ID) + abiWord(depositWei) + abiWord(LZ_DEST_EID) + abiWord(0);
+}
+function callMintAndDeposit(name, depositWei) {
+  // head: networkId, string offset (5 words = 160), deposit, lzDestId, lzTokenAmount = 0
+  return SEL_MINT_AND_DEPOSIT + abiWord(CAW_NETWORK_ID) + abiWord(160) + abiWord(depositWei) +
+    abiWord(LZ_DEST_EID) + abiWord(0) + abiStringTail(name);
+}
+function callAllowance(owner, spender) { return SEL_ALLOWANCE + abiAddr(owner) + abiAddr(spender); }
+function callApprove(spender, amount) { return SEL_APPROVE + abiAddr(spender) + abiWord(amount); }
+
+function l1Rpc(method, params) {
+  return fetch(L1_RPC_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: method, params: params }),
+  }).then(function (r) { return r.json(); }).then(function (j) {
+    if (!j || (j.result == null && method !== "eth_getTransactionReceipt")) {
+      throw new Error((j && j.error && j.error.message) || "L1 read failed");
+    }
+    return j.result;
+  });
+}
+function l1Call(to, data) { return l1Rpc("eth_call", [{ to: to, data: data }, "latest"]); }
+function fmtEth(w) { return (Number(w) / 1e18).toFixed(5); } // display only, mirrors the app
+
+var mintState = {
+  input: "", account: null, chainId: null,
+  phase: "idle", // idle | checking | ready | approving | minting | confirming | done
+  sending: false,
+  check: null,   // { valid, taken, tokenId (BigInt), burn (BigInt) }
+  fee: null,     // quoted LayerZero nativeFee (BigInt wei)
+  balances: null, // { eth: BigInt, caw: BigInt }
+  error: "", result: null, flow: null, checkSeq: 0, mintTxHash: null,
+};
+var mintTimer = null;
+function mintBusy() {
+  return mintState.sending || mintState.phase === "approving" || mintState.phase === "minting" || mintState.phase === "confirming";
+}
+function mintName() { return mintState.input.trim().toLowerCase(); } // Mint.tsx normalizes the same way
+function mintResolveAccount() {
+  if (sess && sess.address) return Promise.resolve(sess.address);
+  if (!window.ethereum) return Promise.resolve(null);
+  return window.ethereum.request({ method: "eth_accounts" }).then(function (a) { return (a && a[0]) || null; }).catch(function () { return null; });
+}
+function mintRefreshChain() {
+  if (!window.ethereum) return Promise.resolve();
+  return window.ethereum.request({ method: "eth_chainId" }).then(function (id) { mintState.chainId = id; }).catch(function () { mintState.chainId = null; });
+}
+function mintFetchBalances() {
+  var acct = mintState.account;
+  if (!acct) return Promise.resolve(null);
+  return Promise.all([
+    l1Rpc("eth_getBalance", [acct, "latest"]),
+    l1Call(CAW_TOKEN_L1, BALANCE_OF_SELECTOR + abiAddr(acct)),
+  ]).then(function (rs) {
+    mintState.balances = { eth: BigInt(rs[0]), caw: BigInt(rs[1]) };
+    return mintState.balances;
+  }).catch(function () { return null; });
+}
+function mintEnter() {
+  if (!window.ethereum) { renderMint(); return; }
+  mintResolveAccount().then(function (acct) {
+    if (acct && acct !== mintState.account) {
+      mintState.account = acct;
+      mintState.check = null; mintState.fee = null;
+    }
+    return mintRefreshChain();
+  }).then(function () {
+    if (mintState.account && mintState.chainId === "0x1") {
+      return mintFetchBalances().then(function () {
+        if (mintName() && !mintState.check && mintState.phase !== "checking" && !mintBusy()) {
+          mintState.phase = "checking";
+          mintRunCheck();
+        }
+      });
+    }
+  }).finally(function () { if (state.route.name === "mint") renderMint(); });
+}
+function mintConnect() {
+  if (!window.ethereum) return;
+  window.ethereum.request({ method: "eth_requestAccounts" }).then(function (accounts) {
+    mintState.account = (accounts && accounts[0]) || null;
+    mintState.error = "";
+    return mintRefreshChain();
+  }).then(function () {
+    return mintState.chainId === "0x1" ? mintFetchBalances() : null;
+  }).then(function () {
+    if (state.route.name !== "mint") return;
+    if (mintName()) {
+      mintState.phase = "checking";
+      renderMint();
+      clearTimeout(mintTimer);
+      mintTimer = setTimeout(mintRunCheck, 300);
+    } else renderMint();
+  }).catch(function (e) {
+    mintState.error = mintErrText(e);
+    if (state.route.name === "mint") renderMint();
+  });
+}
+function mintSwitchChain() {
+  if (!window.ethereum) return;
+  window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x1" }] }).then(function () {
+    mintState.error = "";
+    return mintRefreshChain();
+  }).then(function () {
+    return mintState.chainId === "0x1" ? mintFetchBalances() : null;
+  }).then(function () {
+    if (state.route.name !== "mint") return;
+    if (mintName() && !mintState.check) {
+      mintState.phase = "checking";
+      renderMint();
+      clearTimeout(mintTimer);
+      mintTimer = setTimeout(mintRunCheck, 300);
+    } else renderMint();
+  }).catch(function (e) {
+    mintState.error = mintErrText(e);
+    if (state.route.name === "mint") renderMint();
+  });
+}
+function mintRunCheck() {
+  var name = mintName();
+  if (!name || !mintState.account) return;
+  var seq = ++mintState.checkSeq;
+  Promise.all([
+    l1Call(CAW_MINTER_L1, callIsValidUsername(name)),
+    l1Call(CAW_MINTER_L1, callIdByUsername(name)),
+    l1Call(CAW_MINTER_L1, callCostOfName(name)),
+  ]).then(function (rs) {
+    if (seq !== mintState.checkSeq) return null;
+    var check = { valid: BigInt(rs[0]) !== 0n, tokenId: BigInt(rs[1]), burn: BigInt(rs[2]) };
+    check.taken = check.tokenId !== 0n;
+    mintState.check = check;
+    if (check.valid && !check.taken) {
+      return Promise.all([l1Call(CAW_QUOTER_L1, callMintQuote(MINT_DEPOSIT_WEI)), mintFetchBalances()]).then(function (qr) {
+        if (seq !== mintState.checkSeq) return;
+        mintState.fee = BigInt("0x" + qr[0].slice(2, 66)); // tuple word 0 = nativeFee
+        mintState.phase = "ready";
+        renderMint();
+      });
+    }
+    mintState.phase = "ready";
+    renderMint();
+  }).catch(function () {
+    if (seq !== mintState.checkSeq) return;
+    mintState.phase = "ready";
+    mintState.error = t().mintCheckErr;
+    renderMint();
+  });
+}
+function onMintNameInput(v) {
+  mintState.input = v;
+  mintState.check = null;
+  mintState.fee = null;
+  mintState.error = "";
+  mintState.result = null;
+  mintState.flow = null;
+  if (mintState.phase === "done") mintState.phase = "idle";
+  clearTimeout(mintTimer);
+  if (!mintName()) {
+    mintState.phase = "idle";
+    renderMint();
+    return;
+  }
+  mintState.phase = "checking";
+  renderMint();
+  mintTimer = setTimeout(mintRunCheck, 700); // Mint.tsx debounces 700 ms
+}
+function mintErrText(e) {
+  if (e && (e.code === 4001 || /user rejected|rejected the request|denied/i.test(e.message || ""))) return t().mintRejected;
+  if (e && e.message && e.message.indexOf(t().mintReverted) === 0) return e.message;
+  return (e && e.message) || t().mintFailed;
+}
+function sendEthTx(tx) { return window.ethereum.request({ method: "eth_sendTransaction", params: [tx] }); }
+function waitReceipt(hash) {
+  var tries = 0;
+  return new Promise(function (resolve, reject) {
+    (function poll() {
+      l1Rpc("eth_getTransactionReceipt", [hash]).then(function (r) {
+        if (r) {
+          if (r.status === "0x0") reject(new Error(t().mintReverted));
+          else resolve(r);
+          return;
+        }
+        if (++tries > 48) { reject(new Error(t().mintFailed)); return; }
+        setTimeout(poll, 2500);
+      }).catch(function () {
+        if (++tries > 48) { reject(new Error(t().mintFailed)); return; }
+        setTimeout(poll, 2500);
+      });
+    })();
+  });
+}
+function setMintStep(k) {
+  mintState.phase = k;
+  if (mintState.flow) mintState.flow.forEach(function (f) { if (f.k === k) f.s = "on"; });
+  renderMint();
+}
+/* mint.ts mintName(), mirrored step for step: re-read the burn, check
+   CAW, quote the fee (+20% sent — the contract refunds the excess),
+   check ETH, approve only when the allowance is short, then
+   mintAndDeposit payable, wait, and re-read the new token id. */
+function doMint() {
+  var name = mintName();
+  var check = mintState.check;
+  if (!name || !check || !check.valid || check.taken || mintBusy()) return;
+  if (!mintState.account || mintState.chainId !== "0x1") return;
+  var acct = mintState.account;
+  mintState.error = "";
+  mintState.sending = true;
+  mintState.flow = [
+    { k: "approving", s: "wait" }, { k: "minting", s: "wait" }, { k: "confirming", s: "wait" },
+  ];
+  renderMint();
+  l1Call(CAW_MINTER_L1, callCostOfName(name)).then(function (burnHex) {
+    var total = BigInt(burnHex) + MINT_DEPOSIT_WEI;
+    return mintFetchBalances().then(function () {
+      var bal = mintState.balances;
+      if (!bal || bal.caw < total) {
+        throw new Error(t().mintCawShort.replace("{n}", fmtCaw(total.toString())));
+      }
+      return l1Call(CAW_QUOTER_L1, callMintQuote(MINT_DEPOSIT_WEI)).then(function (q) {
+        var fee = BigInt("0x" + q.slice(2, 66));
+        var value = (fee * 120n) / 100n;
+        if (bal.eth < value) {
+          throw new Error(t().mintEthShort.replace("{n}", fmtEth(value)));
+        }
+        return { total: total, value: value };
+      });
+    });
+  }).then(function (ctx) {
+    return l1Call(CAW_TOKEN_L1, callAllowance(acct, CAW_MINTER_L1)).then(function (alHex) {
+      if (BigInt(alHex) < ctx.total) {
+        setMintStep("approving");
+        return sendEthTx({ from: acct, to: CAW_TOKEN_L1, data: callApprove(CAW_MINTER_L1, ctx.total) })
+          .then(function (h) { return waitReceipt(h); })
+          .then(function () { mintState.flow[0].s = "done"; return ctx; });
+      }
+      mintState.flow[0].s = "skip";
+      return ctx;
+    });
+  }).then(function (ctx) {
+    setMintStep("minting");
+    return sendEthTx({
+      from: acct, to: CAW_MINTER_L1,
+      data: callMintAndDeposit(name, MINT_DEPOSIT_WEI),
+      value: "0x" + ctx.value.toString(16),
+    }).then(function (h) {
+      mintState.mintTxHash = h;
+      mintState.flow[1].s = "done";
+      setMintStep("confirming");
+      return waitReceipt(h);
+    });
+  }).then(function () {
+    mintState.flow[2].s = "done";
+    return l1Call(CAW_MINTER_L1, callIdByUsername(name));
+  }).then(function (idHex) {
+    mintState.result = { name: name, tokenId: Number(BigInt(idHex)), txHash: mintState.mintTxHash };
+    mintState.phase = "done";
+    mintState.sending = false;
+    mintState.flow = null;
+    mintFetchBalances();
+    renderMint();
+  }).catch(function (e) {
+    mintState.phase = "ready";
+    mintState.sending = false;
+    mintState.flow = null;
+    mintState.error = mintErrText(e);
+    renderMint();
+  });
+}
+function resetMint() {
+  mintState.input = "";
+  mintState.check = null;
+  mintState.fee = null;
+  mintState.error = "";
+  mintState.result = null;
+  mintState.flow = null;
+  mintState.phase = "idle";
+  renderMint();
+}
+function renderMint() {
+  var el = document.getElementById("view");
+  if (!el) return;
+  var prev = document.getElementById("mintNameInput");
+  var hadFocus = !!prev && document.activeElement === prev;
+  var caret = prev ? prev.selectionStart : null;
+  var h = '<div class="mint-card"><h3>' + esc(t().mintTitle) + "</h3>";
+  if (mintState.phase === "done" && mintState.result) {
+    var r = mintState.result;
+    h += '<div class="mint-done"><div class="big">🎉</div>' +
+      '<div class="dname">@' + esc(r.name) + "</div>" +
+      '<p class="qnote">' + esc(t().mintDoneName.replace("{id}", String(r.tokenId))) + "</p>" +
+      '<p class="qnote">' + esc(t().mintDoneNote) + "</p>" +
+      (r.txHash ? '<p class="qnote"><a href="https://etherscan.io/tx/' + esc(r.txHash) + '" target="_blank" rel="noopener">' + esc(t().mintTxLink) + "</a></p>" : "") +
+      "</div>" +
+      '<button type="button" class="ghostbtn block" data-mint-again>' + esc(t().mintAnother) + "</button>";
+    h += "</div>";
+    el.innerHTML = h;
+    return;
+  }
+  h += '<p class="sess-note" style="margin:0">' + esc(t().mintIntro) + "</p>";
+  if (!window.ethereum) {
+    h += '<p class="sess-note">' + esc(t().noMetaMask) + "</p>";
+  } else if (!mintState.account) {
+    h += '<p class="sess-note">' + esc(t().mintNeedConnect) + "</p>" +
+      '<button type="button" class="connectbtn" data-mint-connect style="width:100%">' + esc(t().connect) + "</button>";
+    if (mintState.error) h += '<p class="sess-note err">' + esc(mintState.error) + "</p>";
+  } else if (mintState.chainId !== "0x1") {
+    h += '<p class="sess-note">' + esc(t().mintNeedMainnet) + "</p>" +
+      '<button type="button" class="postbtn block" data-mint-switch style="margin-top:4px">' + esc(t().mintSwitchBtn) + "</button>";
+    if (mintState.error) h += '<p class="sess-note err">' + esc(mintState.error) + "</p>";
+  } else {
+    var busy = mintBusy();
+    h += '<div class="mint-name-row"><span class="mint-at">@</span>' +
+      '<input id="mintNameInput" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="' +
+      esc(t().mintNamePh) + '" value="' + esc(mintState.input) + '"' + (busy ? " disabled" : "") + "></div>";
+    var check = mintState.check;
+    var name = mintName();
+    if (mintState.phase === "checking") {
+      h += '<p class="mint-status">' + esc(t().mintChecking) + "</p>";
+    } else if (check && !check.valid) {
+      h += '<p class="mint-status bad">' + esc(t().mintInvalid) + "</p>";
+    } else if (check && check.taken) {
+      h += '<p class="mint-status bad">' + esc(t().mintTaken.replace("{name}", name).replace("{id}", check.tokenId.toString())) + "</p>";
+    } else if (check && check.valid && !check.taken) {
+      h += '<p class="mint-status ok">' + esc(t().mintAvailable.replace("{name}", name)) + "</p>";
+      var total = check.burn + MINT_DEPOSIT_WEI;
+      var ethVal = mintState.fee != null ? (mintState.fee * 120n) / 100n : null;
+      var cawShort = !!(mintState.balances && mintState.balances.caw < total);
+      var ethShort = !!(mintState.balances && ethVal != null && mintState.balances.eth < ethVal);
+      h += '<div class="qrows">' +
+        '<div class="qrow"><span class="qk">' + esc(t().mintBurnLabel) + '</span><span class="qv">' + esc(fmtCaw(check.burn.toString())) + "</span></div>" +
+        '<div class="qrow"><span class="qk">' + esc(t().mintDepositLabel) + '</span><span class="qv">' + esc(fmtCaw(MINT_DEPOSIT_WEI.toString())) + "</span></div>" +
+        '<div class="qrow"><span class="qk">' + esc(t().mintFeeLabel) + '</span><span class="qv">' +
+        (mintState.fee != null ? "≈ " + fmtEth(mintState.fee) + " ETH" : "…") + "</span></div>" +
+        (mintState.balances ?
+          '<div class="qrow"><span class="qk">' + esc(t().mintYourCaw) + '</span><span class="qv">' + esc(fmtCaw(mintState.balances.caw.toString())) + "</span></div>" +
+          '<div class="qrow"><span class="qk">' + esc(t().mintYourEth) + '</span><span class="qv">' + fmtEth(mintState.balances.eth) + " ETH</span></div>" : "") +
+        "</div>";
+      h += '<p class="qnote">' + esc(t().mintFeeNote) + "</p>";
+      if (cawShort) h += '<p class="mint-status bad">' + esc(t().mintCawShort.replace("{n}", fmtCaw(total.toString()))) + "</p>";
+      if (ethShort) h += '<p class="mint-status bad">' + esc(t().mintEthShort.replace("{n}", fmtEth(ethVal))) + "</p>";
+      if (mintState.flow) {
+        h += '<div class="mint-steps">';
+        mintState.flow.forEach(function (f) {
+          if (f.s === "skip") return;
+          var label = f.k === "approving" ? t().mintStepApproving : f.k === "minting" ? t().mintStepMinting : t().mintStepConfirming;
+          h += '<div class="mstep' + (f.s === "on" ? " on" : f.s === "done" ? " done" : "") + '"><span class="sdot"></span><span>' + esc(label) + "</span></div>";
+        });
+        h += "</div>";
+      }
+      if (mintState.error) h += '<p class="mint-status bad">' + esc(mintState.error) + "</p>";
+      var canMint = !!(mintState.fee != null && mintState.balances && !cawShort && !ethShort && !busy);
+      var btnLabel = mintState.phase === "approving" ? t().mintStepApproving :
+        mintState.phase === "minting" ? t().mintStepMinting :
+        mintState.phase === "confirming" ? t().mintStepConfirming : t().mintBtn;
+      h += '<button type="button" class="postbtn block" data-mint-btn' + (canMint ? "" : " disabled") + ">" + esc(btnLabel) + "</button>";
+      h += '<p class="qnote">' + esc(t().mintNote) + "</p>";
+    } else if (mintState.error) {
+      h += '<p class="mint-status bad">' + esc(mintState.error) + "</p>";
+    }
+  }
+  h += "</div>";
+  el.innerHTML = h;
+  var input = document.getElementById("mintNameInput");
+  if (input) {
+    input.addEventListener("input", function () { onMintNameInput(input.value); });
+    if (hadFocus) {
+      input.focus();
+      try { input.setSelectionRange(caret, caret); } catch (e) {}
+    }
+  }
+}
+if (window.ethereum && window.ethereum.on) {
+  window.ethereum.on("chainChanged", function () {
+    mintState.check = null; mintState.fee = null;
+    mintRefreshChain().then(function () {
+      if (state.route.name === "mint") mintEnter();
+    });
+  });
+  window.ethereum.on("accountsChanged", function (accs) {
+    mintState.account = (accs && accs[0]) || null;
+    mintState.check = null; mintState.fee = null; mintState.balances = null;
+    if (state.route.name === "mint") mintEnter();
+  });
 }
 
 /* =====================================================================
@@ -1529,7 +2055,7 @@ function roCardHtml() {
   return '<div class="ro-card"><span class="ro-badge">' + esc(t().readOnly) + "</span><span>" + esc(t().roConnectNote) + '</span> <a href="' + INTRO_URL + '" target="_blank" rel="noopener">' + esc(t().getApp) + "</a></div>";
 }
 function noNameCardHtml() {
-  return '<div class="ro-card"><span>' + esc(t().noNameNote) + '</span> <a href="' + INTRO_URL + '" target="_blank" rel="noopener">' + esc(t().getName) + "</a></div>";
+  return '<div class="ro-card"><span>' + esc(t().noNameNote) + '</span> <a href="#/mint">' + esc(t().mintHere) + '</a> <a href="' + INTRO_URL + '" target="_blank" rel="noopener">' + esc(t().getName) + "</a></div>";
 }
 function gateHtml() {
   if (!state.discovered) return loadingHtml();
@@ -1801,6 +2327,7 @@ function parseRoute() {
   if (parts[0] === "explore") return { name: "explore" };
   if (parts[0] === "bookmarks") return { name: "bookmarks" };
   if (parts[0] === "mirror") return { name: "mirror", id: parts[1] ? decodeURIComponent(parts[1]) : undefined };
+  if (parts[0] === "mint") return { name: "mint" };
   if (parts[0] === "post" && parts[1]) return { name: "thread", id: decodeURIComponent(parts[1]) };
   if (parts[0] === "user" && parts[1]) return { name: "profile", username: decodeURIComponent(parts[1]) };
   return { name: "home" };
@@ -1823,6 +2350,9 @@ function applyRoute() {
   } else if (r.name === "mirror") {
     renderMirror();
     loadMirrorPending();
+  } else if (r.name === "mint") {
+    renderMint();
+    mintEnter();
   } else if (r.name === "thread") {
     if (changed || !state.thread || state.thread.id !== r.id) openThread(r.id);
     renderThread();
@@ -1839,6 +2369,7 @@ function syncChrome() {
   if (r.name === "explore") title = t().explore;
   else if (r.name === "bookmarks") title = t().bookmarks;
   else if (r.name === "mirror") title = t().mirror;
+  else if (r.name === "mint") title = t().navMint;
   else if (r.name === "thread") { title = t().post; back = true; }
   else if (r.name === "profile") {
     title = state.profile && state.profile.user ? displayName(state.profile.user) : (r.username ? "@" + r.username : t().home);
@@ -1877,6 +2408,7 @@ function applyStaticTexts() {
   document.getElementById("navExplore").textContent = t().explore;
   document.getElementById("navBookmarks").textContent = t().bookmarks;
   document.getElementById("navMirror").textContent = t().mirror;
+  document.getElementById("navMint").textContent = t().navMint;
   document.getElementById("navOpenApp").textContent = t().openApp;
   document.getElementById("getAppBtn").textContent = t().getAppBtn;
   document.getElementById("railSearchInput").placeholder = t().searchPh;
@@ -1899,6 +2431,7 @@ function applyStaticTexts() {
   document.getElementById("dNavExplore").textContent = t().explore;
   document.getElementById("dNavBookmarks").textContent = t().bookmarks;
   document.getElementById("dNavMirror").textContent = t().mirror;
+  document.getElementById("dNavMint").textContent = t().navMint;
   document.getElementById("dNavOpenApp").textContent = t().openApp;
   document.getElementById("langToggleD").textContent = lang === "jp" ? "EN" : "日本語";
   document.getElementById("themeToggleD").textContent = dark ? (lang === "jp" ? "白背景" : "Light") : (lang === "jp" ? "黒背景" : "Dark");
@@ -1977,6 +2510,10 @@ document.addEventListener("click", function (e) {
   }
   if (e.target.closest("#composePostBtn")) { submitCompose(); return; }
   if (e.target.closest("#replyPostBtn")) { submitReply(); return; }
+  if (e.target.closest("[data-mint-connect]")) { mintConnect(); return; }
+  if (e.target.closest("[data-mint-switch]")) { mintSwitchChain(); return; }
+  if (e.target.closest("[data-mint-btn]")) { doMint(); return; }
+  if (e.target.closest("[data-mint-again]")) { resetMint(); return; }
   if (e.target.closest("[data-mirror-save]")) {
     var tin = document.getElementById("mirrorTokenInput");
     var val = tin ? tin.value.trim() : "";
