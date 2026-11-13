@@ -438,6 +438,7 @@ var STRINGS = {
     costFmt: "Post cost {C} CAW + tip {T} CAW, paid from your name's deposited CAW",
     replyCostFmt: "Reply cost {C} CAW + tip {T} CAW, paid from your name's deposited CAW",
     indexingNote: "The node is still indexing this wallet's names. Wait a moment, then retry.",
+    noNamesNote: "This wallet owns no CAW names, so it cannot post. Connect the wallet that holds your name — names are minted in the app.",
     verifyFailed: "Verification failed.",
     noNameNote: "This wallet owns no CAW name yet. A name is needed to post — minting is done in the app.",
     getName: "About minting a name →",
@@ -516,6 +517,7 @@ var STRINGS = {
     costFmt: "投稿コスト {C} CAW + チップ {T} CAW（名前の預け入れCAWから支払われます）",
     replyCostFmt: "返信コスト {C} CAW + チップ {T} CAW（名前の預け入れCAWから支払われます）",
     indexingNote: "ノードがこのウォレットの名前を索引中です。少し待ってから再試行してください。",
+    noNamesNote: "このウォレットはCAWの名前を持っていないため投稿できません。名前を持つウォレットで接続してください（名前の発行はアプリで行います）",
     verifyFailed: "認証に失敗しました。",
     noNameNote: "このウォレットはまだ CAW の名前を持っていません。投稿には名前が必要です。名前の発行はアプリからどうぞ。",
     getName: "名前の発行について →",
@@ -726,6 +728,9 @@ var L2_CHAIN_ID = 8453; // config.ts mainnet preset l2ChainId
 var CAW_NETWORK_ID = 1; // config.ts mainnet preset cawNetworkId
 var CAW_ACTIONS_L2 = "0xf4dFCf0EF472E8aaD3783479051f61EC574C6A8E"; // preset.cawActionsL2
 var L2_RPC_URL = "https://mainnet.base.org"; // preset.l2RpcUrl
+var L1_RPC_URL = "https://ethereum-rpc.publicnode.com";
+var CAW_PROFILE_L1 = "0xa3700808e1c62E989fbf5CE15312d79d1475bDb4"; // CawProfile (name NFTs) on Ethereum L1
+var BALANCE_OF_SELECTOR = "0x70a08231"; // balanceOf(address)
 var ACTION_DOMAIN = { name: "Caw Protocol", version: "1", chainId: L2_CHAIN_ID, verifyingContract: CAW_ACTIONS_L2 }; // config.ts actionDomain()
 var ACTION_TYPES = { // config.ts ACTION_TYPES — exact field list
   ActionData: [
@@ -756,6 +761,7 @@ var sessUser = null;      // by-token profile of the sender name
 var sessCounts = null;    // { following, followers } when the node reports them
 var sessBusy = false;
 var sessIndexing = false; // last verify answered 202 (node still indexing)
+var sessNoNames = false;  // verify 202 + on-chain balanceOf == 0 (wallet owns no names)
 var sessError = "";
 var tipCache = null;      // BigInt, whole CAW
 var composeDraft = "";
@@ -828,6 +834,23 @@ function nextCawonceOnChain(id) {
   });
 }
 
+/* A verify that answers 202 is ambiguous: the node may genuinely still
+   be indexing this wallet's names, or the wallet may own no names at
+   all — then 202 never resolves. CawProfile on L1 settles it:
+   balanceOf counts the wallet's name NFTs. Read-only cross-check; the
+   caller falls back to the indexing interpretation on any failure. */
+function profileNameBalance(address) {
+  var data = BALANCE_OF_SELECTOR + address.replace(/^0x/i, "").toLowerCase().padStart(64, "0");
+  return fetch(L1_RPC_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_call", params: [{ to: CAW_PROFILE_L1, data: data }, "latest"] }),
+  }).then(function (r) { return r.json(); }).then(function (j) {
+    if (!j || !j.result) throw new Error("balanceOf read failed");
+    return BigInt(j.result);
+  });
+}
+
 /* actions.ts signAndSubmit() + api.ts submitAction(), mirrored.
    On HTTP 409 cawonce_collision the node returns suggestedCawonce —
    re-sign once with it, then give up plainly. */
@@ -884,7 +907,7 @@ function submitSignedAction(draft, tip, cawonce, retried) {
    keep the cookie session the browser stores. 202 = IndexingError. */
 function connectWallet() {
   if (!window.ethereum || !state.node || sessBusy) return;
-  sessBusy = true; sessError = ""; sessIndexing = false;
+  sessBusy = true; sessError = ""; sessIndexing = false; sessNoNames = false;
   renderSessionUI();
   var address = null;
   window.ethereum.request({ method: "eth_requestAccounts" }).then(function (accounts) {
@@ -899,7 +922,15 @@ function connectWallet() {
         credentials: "include",
         body: JSON.stringify({ message: message, signature: signature }),
       }).then(function (res) {
-        if (res.status === 202) { sessIndexing = true; return null; }
+        if (res.status === 202) {
+          // Cross-check on-chain, once per connect attempt: balanceOf == 0
+          // means this wallet owns no names and 202 would never resolve,
+          // so show the no-names message instead of the indexing one.
+          return profileNameBalance(address).then(function (bal) {
+            if (bal === 0n) sessNoNames = true; else sessIndexing = true;
+            return null;
+          }).catch(function () { sessIndexing = true; return null; });
+        }
         if (!res.ok) throw new Error(t().verifyFailed + " (HTTP " + res.status + ")");
         return res.json();
       }).then(function (body) {
@@ -930,7 +961,7 @@ function connectWallet() {
 function disconnectWallet() {
   // api.ts has no logout endpoint — disconnecting clears local state;
   // the node's cookie simply stops being used by this page.
-  sess = null; sessUser = null; sessCounts = null; sessIndexing = false; sessError = "";
+  sess = null; sessUser = null; sessCounts = null; sessIndexing = false; sessNoNames = false; sessError = "";
   saveSess();
   renderSessionUI();
   refreshView();
@@ -958,6 +989,7 @@ function sessInnerHtml() {
   if (sessBusy) return '<button type="button" class="connectbtn" disabled>' + esc(t().connecting) + "</button>";
   if (!sess) {
     var h = '<button type="button" class="connectbtn" data-connect>' + esc(t().connect) + "</button>";
+    if (sessNoNames) h += '<p class="sess-note">' + esc(t().noNamesNote) + "</p>";
     if (sessIndexing) h += '<p class="sess-note">' + esc(t().indexingNote) + "</p>";
     if (sessError) h += '<p class="sess-note err">' + esc(sessError) + "</p>";
     return h;
