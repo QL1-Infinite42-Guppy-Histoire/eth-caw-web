@@ -74,6 +74,8 @@
   .ro-card { margin: 12px 16px; background: var(--card-bg); border-radius: 16px; padding: 14px 16px; font-size: 14px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
   .ro-badge { background: var(--accent); color: #fff; border-radius: 999px; padding: 1px 10px; font-size: 12px; font-weight: 800; flex: none; }
   .ro-card a { font-weight: 700; }
+  .ro-card a.mintbtn { background: var(--accent); color: #fff; border-radius: 999px; padding: 7px 16px; font-weight: 800; text-decoration: none; }
+  .ro-card a.mintbtn:hover { background: var(--accent-hover); }
 
   .state-box { padding: 48px 32px; text-align: left; }
   .state-box h2 { font-size: 29px; font-weight: 800; margin: 0 0 10px; line-height: 1.25; }
@@ -413,7 +415,7 @@
 "use strict";
 /* CAW web viewer.
    Reads come from public CAW nodes (GET requests). Visitors who do not
-   connect a wallet get the read-only experience. Connected visitors
+   connect a wallet get the viewing experience. Connected visitors
    sign with MetaMask only (personal_sign session + EIP-712 actions,
    mirroring the app's protocol client) — this page never sees, asks
    for, or stores a private key or seed phrase. Name minting mirrors
@@ -429,8 +431,7 @@ var STRINGS = {
     brandSub: "Ethereum · community deployment",
     home: "Home", explore: "Explore", bookmarks: "Bookmarks",
     openApp: "Open the app", getAppBtn: "Get the app",
-    readOnly: "READ-ONLY",
-    roNote: "Posting is done in the app — this web page is read-only.",
+    viewingBadge: "VIEWING",
     getApp: "About the app →",
     nodeOn: "Node", network: "Network", nodeSearching: "Looking for a public node…",
     retry: "Retry",
@@ -460,7 +461,7 @@ var STRINGS = {
     connecting: "Connecting…",
     disconnect: "Disconnect",
     noMetaMask: "MetaMask was not found. Install MetaMask, or open this page in the MetaMask browser, to post from the web.",
-    roConnectNote: "Connect MetaMask to post, like and recaw from this page.",
+    roConnectNote: "Viewing is free and needs no wallet. Connect MetaMask to post, like, recaw and mint names on this page.",
     postAction: "Post",
     posting: "Posting…",
     composePh: "What's happening?",
@@ -474,6 +475,8 @@ var STRINGS = {
     noNameNote: "This wallet owns no CAW name yet. A name is needed to post — mint one on this page or in the app.",
     getName: "About minting a name →",
     mintHere: "Mint a name on this page →",
+    noNameYet: "This wallet has no CAW name yet.",
+    noNameMintBtn: "Mint a name on this page",
     actFailed: "The action could not be submitted.",
     actUnavailable: "This node's feed does not include the data this action needs.",
     postedOk: "Submitted — a validator will deliver it on-chain.",
@@ -542,8 +545,7 @@ var STRINGS = {
     brandSub: "Ethereum・コミュニティ版",
     home: "ホーム", explore: "検索", bookmarks: "ブックマーク",
     openApp: "アプリを開く", getAppBtn: "アプリを入手",
-    readOnly: "閲覧専用",
-    roNote: "投稿はアプリから行います。このWebページは閲覧専用です。",
+    viewingBadge: "閲覧モード",
     getApp: "アプリについて →",
     nodeOn: "接続ノード", network: "ネットワーク", nodeSearching: "公開ノードを探しています…",
     retry: "再試行",
@@ -573,7 +575,7 @@ var STRINGS = {
     connecting: "接続中…",
     disconnect: "切断",
     noMetaMask: "MetaMask が見つかりません。投稿するには MetaMask を入れるか、MetaMask ブラウザでこのページを開いてください。",
-    roConnectNote: "MetaMaskを接続すると、このページから投稿・いいね・Recawができます。",
+    roConnectNote: "閲覧は無料で、ウォレットは不要です。MetaMaskを接続すると、投稿・いいね・Recawと名前の発行がこのページでできます。",
     postAction: "投稿",
     posting: "投稿中…",
     composePh: "いまどうしてる？",
@@ -587,6 +589,8 @@ var STRINGS = {
     noNameNote: "このウォレットはまだ CAW の名前を持っていません。投稿には名前が必要です。このページかアプリで発行できます。",
     getName: "名前の発行について →",
     mintHere: "このページで名前を発行 →",
+    noNameYet: "このウォレットには、まだCAWの名前がありません。",
+    noNameMintBtn: "このページで名前を発行",
     actFailed: "アクションを送信できませんでした。",
     actUnavailable: "このノードのフィードには、このアクションに必要なデータが含まれていません。",
     postedOk: "送信しました。バリデータがオンチェーンへ届けます。",
@@ -2052,10 +2056,13 @@ function noNodeHtml() {
 }
 function loadingHtml() { return '<div class="state-box center"><p>' + esc(t().loading) + "</p></div>"; }
 function roCardHtml() {
-  return '<div class="ro-card"><span class="ro-badge">' + esc(t().readOnly) + "</span><span>" + esc(t().roConnectNote) + '</span> <a href="' + INTRO_URL + '" target="_blank" rel="noopener">' + esc(t().getApp) + "</a></div>";
+  return '<div class="ro-card"><span class="ro-badge">' + esc(t().viewingBadge) + "</span><span>" + esc(t().roConnectNote) + '</span> <a href="' + INTRO_URL + '" target="_blank" rel="noopener">' + esc(t().getApp) + "</a></div>";
+}
+function indexingCardHtml() {
+  return '<div class="ro-card"><span>' + esc(t().indexingNote) + "</span></div>";
 }
 function noNameCardHtml() {
-  return '<div class="ro-card"><span>' + esc(t().noNameNote) + '</span> <a href="#/mint">' + esc(t().mintHere) + '</a> <a href="' + INTRO_URL + '" target="_blank" rel="noopener">' + esc(t().getName) + "</a></div>";
+  return '<div class="ro-card"><span>' + esc(t().noNameYet) + '</span> <a class="mintbtn" href="#/mint">' + esc(t().noNameMintBtn) + '</a> <a href="' + INTRO_URL + '" target="_blank" rel="noopener">' + esc(t().getApp) + "</a></div>";
 }
 function gateHtml() {
   if (!state.discovered) return loadingHtml();
@@ -2071,6 +2078,8 @@ function renderHome() {
   var f = state.feed;
   var html = "";
   if (sess && hasName()) html += composeHtml();
+  else if (sessNoNames) html += noNameCardHtml();
+  else if (sessIndexing) html += indexingCardHtml();
   else if (sess) html += noNameCardHtml();
   else html += roCardHtml();
   if (f.error && !f.items.length) html += '<div class="state-box center"><p class="err">' + esc(t().feedErr) + "</p></div>";
@@ -2610,7 +2619,7 @@ hydrateIcons(document);
 applyStaticTexts();
 /* Mirror push: register the service worker at startup. It only
    handles push notifications — no fetch interception — so the
-   read-only experience is unaffected for everyone. */
+   browsing experience is unaffected for everyone. */
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(function () {});
 }
