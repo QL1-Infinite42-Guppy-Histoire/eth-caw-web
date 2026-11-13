@@ -14,17 +14,21 @@
     --bg: #ffffff; --text: #0f1419; --muted: #536471; --accent: #1d9bf0; --accent-hover: #1a8cd8;
     --border: #eff3f4; --border-strong: #cfd9de; --hover: rgba(15,20,25,.03); --active-bg: rgba(15,20,25,.06);
     --card-bg: #f7f9f9; --search-bg: #eff3f4; --like: #f91880; --recaw: #00ba7c;
-    --bg-blur: rgba(255,255,255,.85); --banner: linear-gradient(120deg, #1d9bf0, #794bc4);
+    --bg-blur: rgba(255,255,255,.85); --banner: #cfd9de;
+    --cell-hover: #f7f9f9; --nav-hover: rgba(15,20,25,.1); --row-hover: #eff3f4;
+    --tint-blue: rgba(29,155,240,.1); --tint-green: rgba(0,186,124,.1); --tint-pink: rgba(249,24,128,.1);
   }
   :root[data-theme="dark"] {
     --bg: #000000; --text: #e7e9ea; --muted: #71767b; --accent: #1d9bf0; --accent-hover: #1a8cd8;
     --border: #2f3336; --border-strong: #536471; --hover: rgba(231,233,234,.03); --active-bg: rgba(231,233,234,.08);
     --card-bg: #16181c; --search-bg: #202327; --like: #f91880; --recaw: #00ba7c;
-    --bg-blur: rgba(0,0,0,.65); --banner: linear-gradient(120deg, #0d4d73, #3d2a63);
+    --bg-blur: rgba(0,0,0,.65); --banner: #333639;
+    --cell-hover: rgba(255,255,255,.03); --nav-hover: rgba(231,233,234,.1); --row-hover: #1d1f23;
+    --tint-blue: rgba(29,155,240,.1); --tint-green: rgba(0,186,124,.1); --tint-pink: rgba(249,24,128,.1);
   }
   * { box-sizing: border-box; }
   html { scrollbar-gutter: stable; }
-  body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", Helvetica, Arial, sans-serif; line-height: 1.45; font-size: 15px; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", Helvetica, Arial, sans-serif; line-height: 1.45; font-size: 15px; letter-spacing: normal; }
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
   button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
@@ -34,17 +38,17 @@
 
   /* ---------- left sidebar ---------- */
   .sidebar { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; padding: 6px 12px 16px; overflow-y: auto; }
-  .logo-row { display: flex; align-items: center; gap: 12px; padding: 8px 10px; }
-  .logo-img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; display: block; }
-  .logo-word { font-size: 21px; font-weight: 800; letter-spacing: .01em; }
+  .logo-row { display: flex; align-items: center; gap: 12px; padding: 8px 12px; }
+  .logo-img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; display: block; }
+  .logo-word { font-size: 20px; font-weight: 800; letter-spacing: normal; }
   .logo-word small { display: block; font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0; }
-  .snav { margin-top: 6px; display: flex; flex-direction: column; gap: 2px; }
-  .snav a { display: flex; align-items: center; gap: 18px; padding: 11px 12px; border-radius: 999px; color: var(--text); font-size: 19px; width: fit-content; max-width: 100%; }
-  .snav a:hover { background: var(--hover); text-decoration: none; }
+  .snav { margin-top: 4px; display: flex; flex-direction: column; gap: 2px; }
+  .snav a { display: flex; align-items: center; gap: 20px; padding: 12px; border-radius: 999px; color: var(--text); font-size: 20px; line-height: 24px; width: fit-content; max-width: 100%; }
+  .snav a:hover { background: var(--nav-hover); text-decoration: none; }
   .snav a.on { font-weight: 800; }
-  .snav svg { width: 26px; height: 26px; flex: none; }
-  .snav .lbl { padding-right: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .getapp { margin-top: 18px; display: block; text-align: center; background: var(--accent); color: #fff; font-weight: 700; font-size: 16px; border-radius: 999px; padding: 13px 20px; width: 88%; }
+  .snav svg { width: 26.5px; height: 26.5px; flex: none; }
+  .snav .lbl { padding-right: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .getapp { margin-top: 16px; display: block; text-align: center; background: var(--accent); color: #fff; font-weight: 700; font-size: 17px; border-radius: 999px; padding: 14px 20px; width: 90%; box-shadow: 0 4px 14px rgba(29,155,240,.25); }
   .getapp:hover { background: var(--accent-hover); text-decoration: none; }
   .side-bottom { margin-top: auto; padding: 14px 10px 0; }
   .nodebox { display: flex; gap: 9px; align-items: flex-start; font-size: 13px; color: var(--muted); }
@@ -59,13 +63,15 @@
   /* ---------- center column ---------- */
   .center { border-left: 1px solid var(--border); border-right: 1px solid var(--border); min-height: 100vh; min-width: 0; }
   .center-header { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 14px; padding: 0 16px; height: 54px; background: var(--bg-blur); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-  .center-header .ttl { font-size: 19px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .center-header .ttl { font-size: 20px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .drawer-btn { display: none; width: 34px; height: 34px; border-radius: 50%; overflow: hidden; flex: none; padding: 0; margin-left: -6px; }
+  .drawer-btn img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .backbtn { display: none; width: 34px; height: 34px; border-radius: 50%; align-items: center; justify-content: center; flex: none; margin-left: -8px; }
   .backbtn:hover { background: var(--hover); }
   .backbtn.show { display: flex; }
   .backbtn svg { width: 20px; height: 20px; }
 
-  .ro-card { margin: 12px 16px; border: 1px solid var(--border); border-radius: 16px; padding: 12px 16px; font-size: 14px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  .ro-card { margin: 12px 16px; background: var(--card-bg); border-radius: 16px; padding: 14px 16px; font-size: 14px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
   .ro-badge { background: var(--accent); color: #fff; border-radius: 999px; padding: 1px 10px; font-size: 12px; font-weight: 800; flex: none; }
   .ro-card a { font-weight: 700; }
 
@@ -76,21 +82,21 @@
   .err { color: #f4212e; }
 
   /* ---------- post cells ---------- */
-  .post { padding: 12px 16px 4px; border-bottom: 1px solid var(--border); cursor: pointer; }
-  .post:hover { background: var(--hover); }
+  .post { padding: 12px 16px 6px; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .post:hover { background: var(--cell-hover); }
   .ctx-line { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; font-weight: 700; margin: 0 0 4px 26px; }
   .ctx-line svg { width: 15px; height: 15px; }
   .reply-line { color: var(--muted); font-size: 14px; margin-bottom: 2px; }
   .reply-line .mention { color: var(--accent); }
   .post-row { display: flex; gap: 10px; }
-  .avatar { width: 44px; height: 44px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 17px; color: #fff; overflow: hidden; cursor: pointer; }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; color: #fff; overflow: hidden; cursor: pointer; }
   .avatar img { width: 100%; height: 100%; object-fit: cover; }
   .post-main { flex: 1; min-width: 0; }
   .post-head { display: flex; align-items: baseline; gap: 5px; min-width: 0; }
-  .pname { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+  .pname { font-weight: 700; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
   .pname:hover { text-decoration: underline; }
-  .phandle { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
-  .post-body { white-space: pre-wrap; word-break: break-word; font-size: 15px; margin-top: 1px; }
+  .phandle { color: var(--muted); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
+  .post-body { white-space: pre-wrap; word-break: break-word; font-size: 15px; line-height: 20px; margin-top: 1px; }
   .post-body a, .mention { color: var(--accent); }
   .mention { cursor: pointer; }
   .mention:hover { text-decoration: underline; }
@@ -99,14 +105,23 @@
   .quote-embed .post-body { font-size: 14px; }
   .quote-embed .avatar { width: 20px; height: 20px; font-size: 10px; }
   .quote-head { display: flex; align-items: center; gap: 5px; }
-  .actions { display: flex; align-items: center; justify-content: space-between; max-width: 425px; margin: 6px 0 4px -8px; color: var(--muted); }
-  .act { display: inline-flex; align-items: center; gap: 3px; font-size: 13px; padding: 6px 8px; border-radius: 999px; line-height: 1; }
-  .act svg { width: 18px; height: 18px; }
+  .actions { display: flex; align-items: center; justify-content: space-between; max-width: 425px; margin: 5px 0 3px -7px; color: var(--muted); }
+  .act { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; padding: 5px 7px; line-height: 1; }
+  .act .ic { position: relative; display: inline-flex; flex: none; }
+  .act .ic::before { content: ""; position: absolute; inset: -8px; border-radius: 50%; transition: background-color .2s; }
+  .act svg { width: 18.5px; height: 18.5px; position: relative; }
   .act i { font-style: normal; min-width: 8px; }
-  button.act:hover { background: var(--hover); }
+  .act.reply:hover, .act.views:hover { color: var(--accent); }
+  .act.reply:hover .ic::before, .act.views:hover .ic::before { background: var(--tint-blue); }
+  .act.recaw:hover { color: var(--recaw); }
+  .act.recaw:hover .ic::before { background: var(--tint-green); }
+  .act.like:hover { color: var(--like); }
+  .act.like:hover .ic::before { background: var(--tint-pink); }
   .act.like.on { color: var(--like); }
   .act.recaw.on { color: var(--recaw); }
   button.act.bm { color: var(--muted); }
+  button.act.bm:hover { color: var(--accent); }
+  button.act.bm:hover .ic::before { background: var(--tint-blue); }
   button.act.bm.on { color: var(--accent); }
   .showmore { display: block; width: 100%; text-align: center; color: var(--accent); font-size: 15px; padding: 16px; border-bottom: 1px solid var(--border); }
   .showmore:hover { background: var(--hover); }
@@ -114,19 +129,19 @@
 
   /* ---------- thread ---------- */
   .thread-post { padding: 14px 16px 6px; border-bottom: 1px solid var(--border); }
-  .thread-post .avatar { width: 44px; height: 44px; }
+  .thread-post .avatar { width: 40px; height: 40px; }
   .thead-names { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
   .thead-names .pname { font-size: 15px; }
   .thead-names .phandle { flex: none; }
   .thread-body { font-size: 17px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; margin-top: 12px; }
-  .thread-meta { color: var(--muted); font-size: 15px; margin-top: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .thread-meta { color: var(--muted); font-size: 15px; margin-top: 14px; padding-bottom: 4px; }
   .thread-meta b { color: var(--text); }
-  .thread-post .actions { margin-top: 4px; }
+  .thread-post .actions { max-width: none; margin: 8px -7px 0; padding: 5px 0 3px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 
   /* ---------- profile ---------- */
   .banner { height: 200px; background: var(--banner); }
   .prof-pad { padding: 0 16px; }
-  .prof-avatar { width: 128px; height: 128px; border-radius: 50%; border: 4px solid var(--bg); margin-top: -64px; font-size: 46px; display: flex; align-items: center; justify-content: center; color: #fff; overflow: hidden; background: var(--card-bg); position: relative; z-index: 1; }
+  .prof-avatar { width: 133px; height: 133px; border-radius: 50%; border: 4px solid var(--bg); margin-top: -66px; font-size: 48px; display: flex; align-items: center; justify-content: center; color: #fff; overflow: hidden; background: var(--card-bg); position: relative; z-index: 1; }
   .prof-avatar img { width: 100%; height: 100%; object-fit: cover; }
   .prof-name { font-size: 20px; font-weight: 800; margin-top: 8px; }
   .prof-handle { color: var(--muted); font-size: 15px; }
@@ -146,11 +161,12 @@
   .explore-search { padding: 12px 16px 4px; }
   .searchbox { display: flex; align-items: center; gap: 10px; background: var(--search-bg); border: 1px solid transparent; border-radius: 999px; padding: 11px 16px; }
   .searchbox:focus-within { background: var(--bg); border-color: var(--accent); }
+  .searchbox:focus-within svg { color: var(--accent); }
   .searchbox svg { width: 18px; height: 18px; color: var(--muted); flex: none; }
   .searchbox input { flex: 1; border: none; background: none; color: var(--text); font: inherit; font-size: 15px; outline: none; min-width: 0; }
   .sec-title { font-size: 19px; font-weight: 800; padding: 14px 16px 6px; }
   .namerow { display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer; }
-  .namerow:hover { background: var(--hover); }
+  .namerow:hover { background: var(--cell-hover); }
   .namerow .nm { min-width: 0; flex: 1; }
   .namerow .nm .pname { display: block; }
   .namerow .sub { color: var(--muted); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -162,9 +178,9 @@
   .rail::-webkit-scrollbar { display: none; }
   .rail .searchbox { margin-bottom: 14px; }
   .rail-card { background: var(--card-bg); border-radius: 16px; padding: 14px 0 8px; margin-bottom: 16px; overflow: hidden; }
-  .rail-card h2 { font-size: 19px; font-weight: 800; margin: 0; padding: 0 16px 8px; }
+  .rail-card h2 { font-size: 20px; font-weight: 800; margin: 0; padding: 0 16px 8px; }
   .rail-card .namerow { padding: 10px 16px; }
-  .rail-card .namerow:hover { background: var(--hover); }
+  .rail-card .namerow:hover { background: var(--row-hover); }
   .rail .showmore { border-bottom: none; text-align: left; padding: 12px 16px; }
   .about-logo { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
   .about-body { padding: 0 16px; font-size: 14px; color: var(--muted); }
@@ -174,8 +190,23 @@
   .rail-foot a { color: var(--muted); }
   .rail-foot a:hover { text-decoration: underline; }
 
-  /* ---------- mobile bottom bar ---------- */
-  .mobilebar { display: none; }
+  /* ---------- mobile drawer (X app nav-drawer pattern) ---------- */
+  .scrim { position: fixed; inset: 0; background: rgba(91,112,131,.4); z-index: 110; opacity: 0; pointer-events: none; transition: opacity .28s ease; }
+  .scrim.open { opacity: 1; pointer-events: auto; }
+  .drawer { position: fixed; top: 0; left: 0; bottom: 0; width: min(320px, 85vw); background: var(--bg); z-index: 120; transform: translateX(-106%); transition: transform .28s ease; display: flex; flex-direction: column; padding: 16px 16px 20px; overflow-y: auto; box-shadow: 0 0 24px rgba(0,0,0,.28); }
+  .drawer.open { transform: translateX(0); }
+  .drawer-head { padding: 4px 8px 6px; }
+  .drawer-logo { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; display: block; }
+  .drawer-name { font-weight: 800; font-size: 17px; margin-top: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .drawer-handle { color: var(--muted); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .drawer-counts { margin-top: 10px; font-size: 14px; color: var(--muted); display: flex; gap: 18px; }
+  .drawer-counts b { color: var(--text); font-size: 15px; }
+  .dnav { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 8px; display: flex; flex-direction: column; }
+  .dnav a { display: flex; align-items: center; gap: 18px; padding: 15px 8px; margin: 0 -8px; border-radius: 12px; color: var(--text); font-size: 20px; font-weight: 700; }
+  .dnav a:hover { background: var(--hover); text-decoration: none; }
+  .dnav a.on { font-weight: 800; }
+  .dnav svg { width: 26px; height: 26px; flex: none; }
+  .drawer-controls { margin-top: auto; padding-top: 16px; }
   @media (max-width: 1279px) {
     .shell { grid-template-columns: 72px minmax(0,600px) 320px; column-gap: 12px; max-width: 1030px; }
     .sidebar { padding: 6px 6px 16px; align-items: center; }
@@ -191,14 +222,10 @@
   @media (max-width: 699px) {
     .shell { grid-template-columns: minmax(0,1fr); max-width: none; }
     .sidebar { display: none; }
+    .drawer-btn { display: block; }
     .center { border-left: none; border-right: none; }
     .banner { height: 130px; }
     .prof-avatar { width: 84px; height: 84px; margin-top: -42px; font-size: 30px; border-width: 3px; }
-    body { padding-bottom: 52px; }
-    .mobilebar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; background: var(--bg-blur); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--border); height: 52px; }
-    .mobilebar a { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--text); }
-    .mobilebar a svg { width: 25px; height: 25px; }
-    .mobilebar a.on svg { stroke-width: 2.6; }
   }
 </style>
 </head>
@@ -230,6 +257,7 @@
 
   <main class="center">
     <div class="center-header">
+      <button class="drawer-btn" id="drawerBtn" type="button" aria-label="Menu"><img src="assets/logo.jpg" alt=""></button>
       <button class="backbtn" id="backBtn" type="button" aria-label="Back"><span data-icon="back"></span></button>
       <span class="ttl" id="centerTitle"></span>
     </div>
@@ -267,11 +295,26 @@
   </aside>
 </div>
 
-<nav class="mobilebar" id="mobileBar">
-  <a href="#/" data-nav="home"><span data-icon="home"></span></a>
-  <a href="#/explore" data-nav="explore"><span data-icon="search"></span></a>
-  <a href="#/bookmarks" data-nav="bookmarks"><span data-icon="bookmark"></span></a>
-</nav>
+<div class="scrim" id="drawerScrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-head">
+    <img class="drawer-logo" id="drawerAvatar" src="assets/logo.jpg" alt="">
+    <div class="drawer-name" id="drawerName">CAW</div>
+    <div class="drawer-handle" id="brandSubD"></div>
+    <div class="drawer-counts hidden" id="drawerCounts"></div>
+  </div>
+  <nav class="dnav" id="drawerNav">
+    <a href="#/" data-nav="home"><span data-icon="home"></span><span class="lbl" id="dNavHome"></span></a>
+    <a href="#/explore" data-nav="explore"><span data-icon="search"></span><span class="lbl" id="dNavExplore"></span></a>
+    <a href="#/bookmarks" data-nav="bookmarks"><span data-icon="bookmark"></span><span class="lbl" id="dNavBookmarks"></span></a>
+    <a href="https://ql1-infinite42-guppy-histoire.github.io/eth-caw/" target="_blank" rel="noopener"><span data-icon="smartphone"></span><span class="lbl" id="dNavOpenApp"></span></a>
+  </nav>
+  <div id="drawerSession"></div>
+  <div class="side-controls drawer-controls">
+    <button id="langToggleD" type="button">日本語</button>
+    <button id="themeToggleD" type="button"></button>
+  </div>
+</aside>
 
 <script>
 "use strict";
@@ -418,23 +461,9 @@ function fmtCount(n) {
 function fmtThreadMeta(item) {
   var d = new Date(item.timestamp);
   if (isNaN(d.getTime())) return "";
-  var viewsPart = "";
-  if (typeof item.viewCount === "number") {
-    if (lang === "jp") viewsPart = " · " + item.viewCount.toLocaleString("en-US") + " " + t().views;
-    else viewsPart = " · " + item.viewCount.toLocaleString("en-US") + " " + t().views;
-  }
-  if (lang === "jp") {
-    var h = d.getHours();
-    var ampm = h < 12 ? "午前" : "午後";
-    var h12 = h % 12 === 0 ? 12 : h % 12;
-    var mm = String(d.getMinutes()).padStart(2, "0");
-    return ampm + h12 + ":" + mm + " · " + d.getFullYear() + "年" + (d.getMonth() + 1) + "月" + d.getDate() + "日" + viewsPart;
-  }
-  var hh = d.getHours();
-  var ap = hh < 12 ? "AM" : "PM";
-  var hh12 = hh % 12 === 0 ? 12 : hh % 12;
-  var min2 = String(d.getMinutes()).padStart(2, "0");
-  return hh12 + ":" + min2 + " " + ap + " · " + MONTHS_EN[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear() + viewsPart;
+  var p2 = function (n) { return String(n).padStart(2, "0"); };
+  return p2(d.getHours()) + ":" + p2(d.getMinutes()) + " · " +
+    d.getFullYear() + "/" + p2(d.getMonth() + 1) + "/" + p2(d.getDate());
 }
 function fmtCaw(weiStr) {
   if (weiStr == null || weiStr === "") return null;
@@ -508,7 +537,7 @@ function refreshBookmarkButtons(id) {
   var on = isBookmarked(id);
   document.querySelectorAll('[data-bookmark="' + CSS.escape(String(id)) + '"]').forEach(function (btn) {
     btn.classList.toggle("on", on);
-    btn.innerHTML = icon("bookmark", on) ;
+    btn.innerHTML = '<span class="ic">' + icon("bookmark", on) + "</span>";
   });
 }
 </script>
@@ -580,15 +609,15 @@ function actionsHtml(eff) {
   var id = eff.id;
   var bmOn = isBookmarked(id);
   var h = '<div class="actions">';
-  h += '<span class="act reply">' + icon("reply") + "<i>" + (eff.commentCount ? fmtCount(eff.commentCount) : "") + "</i></span>";
-  h += '<span class="act recaw' + (eff.hasRecawed ? " on" : "") + '">' + icon("recaw") + "<i>" + (eff.recawCount ? fmtCount(eff.recawCount) : "") + "</i></span>";
-  h += '<span class="act like' + (eff.hasLiked ? " on" : "") + '">' + icon("heart", !!eff.hasLiked) + "<i>" + (eff.likeCount ? fmtCount(eff.likeCount) : "") + "</i></span>";
+  h += '<span class="act reply"><span class="ic">' + icon("reply") + "</span><i>" + (eff.commentCount ? fmtCount(eff.commentCount) : "") + "</i></span>";
+  h += '<span class="act recaw' + (eff.hasRecawed ? " on" : "") + '"><span class="ic">' + icon("recaw") + "</span><i>" + (eff.recawCount ? fmtCount(eff.recawCount) : "") + "</i></span>";
+  h += '<span class="act like' + (eff.hasLiked ? " on" : "") + '"><span class="ic">' + icon("heart", !!eff.hasLiked) + "</span><i>" + (eff.likeCount ? fmtCount(eff.likeCount) : "") + "</i></span>";
   if (typeof eff.viewCount === "number") {
-    h += '<span class="act views">' + icon("views") + "<i>" + fmtCount(eff.viewCount) + "</i></span>";
+    h += '<span class="act views"><span class="ic">' + icon("views") + "</span><i>" + fmtCount(eff.viewCount) + "</i></span>";
   } else {
     h += '<span class="act"></span>';
   }
-  h += '<button type="button" class="act bm' + (bmOn ? " on" : "") + '" data-bookmark="' + esc(id) + '" aria-label="' + esc(t().bookmarkLabel) + '">' + icon("bookmark", bmOn) + "</button>";
+  h += '<button type="button" class="act bm' + (bmOn ? " on" : "") + '" data-bookmark="' + esc(id) + '" aria-label="' + esc(t().bookmarkLabel) + '"><span class="ic">' + icon("bookmark", bmOn) + "</span></button>";
   h += "</div>";
   return h;
 }
@@ -781,7 +810,11 @@ function renderThread() {
     '<span class="phandle">@' + esc(u.username || "") + "</span></div></div>";
   h += '<div class="thread-body">' + linkify(caw.content || "") + "</div>";
   if (caw.isQuote && caw.parent) h += quoteHtml(caw.parent);
-  h += '<div class="thread-meta">' + esc(fmtThreadMeta(caw)) + "</div>";
+  var metaHtml = esc(fmtThreadMeta(caw));
+  if (typeof caw.viewCount === "number") {
+    metaHtml += " · <b>" + caw.viewCount.toLocaleString("en-US") + "</b> " + esc(t().views);
+  }
+  h += '<div class="thread-meta">' + metaHtml + "</div>";
   h += actionsHtml(caw);
   h += "</div>";
   if (!th.comments.length && !th.loading) h += '<div class="state-box center"><p>' + esc(t().noReplies) + "</p></div>";
@@ -986,22 +1019,47 @@ function applyStaticTexts() {
   var dark = document.documentElement.dataset.theme === "dark";
   document.getElementById("themeToggle").textContent = dark ? (lang === "jp" ? "白背景" : "Light") : (lang === "jp" ? "黒背景" : "Dark");
   document.getElementById("backBtn").setAttribute("aria-label", t().back);
+  document.getElementById("brandSubD").textContent = t().brandSub;
+  document.getElementById("dNavHome").textContent = t().home;
+  document.getElementById("dNavExplore").textContent = t().explore;
+  document.getElementById("dNavBookmarks").textContent = t().bookmarks;
+  document.getElementById("dNavOpenApp").textContent = t().openApp;
+  document.getElementById("langToggleD").textContent = lang === "jp" ? "EN" : "日本語";
+  document.getElementById("themeToggleD").textContent = dark ? (lang === "jp" ? "白背景" : "Light") : (lang === "jp" ? "黒背景" : "Dark");
 }
 
 /* ---------- events ---------- */
-document.getElementById("langToggle").addEventListener("click", function () {
+function doToggleLang() {
   lang = lang === "jp" ? "en" : "jp";
   try { localStorage.setItem("ethcaw-web-lang", lang); } catch (e) {}
   applyStaticTexts();
   applyRoute();
   renderRailNames();
-});
-document.getElementById("themeToggle").addEventListener("click", function () {
+}
+function doToggleTheme() {
   var rootEl = document.documentElement;
   if (rootEl.dataset.theme === "dark") { delete rootEl.dataset.theme; try { localStorage.removeItem("guppy-theme"); } catch (e) {} }
   else { rootEl.dataset.theme = "dark"; try { localStorage.setItem("guppy-theme", "dark"); } catch (e) {} }
   applyStaticTexts();
-});
+}
+document.getElementById("langToggle").addEventListener("click", doToggleLang);
+document.getElementById("langToggleD").addEventListener("click", doToggleLang);
+document.getElementById("themeToggle").addEventListener("click", doToggleTheme);
+document.getElementById("themeToggleD").addEventListener("click", doToggleTheme);
+function openDrawer() {
+  document.getElementById("drawer").classList.add("open");
+  document.getElementById("drawer").setAttribute("aria-hidden", "false");
+  document.getElementById("drawerScrim").classList.add("open");
+}
+function closeDrawer() {
+  document.getElementById("drawer").classList.remove("open");
+  document.getElementById("drawer").setAttribute("aria-hidden", "true");
+  document.getElementById("drawerScrim").classList.remove("open");
+}
+document.getElementById("drawerBtn").addEventListener("click", openDrawer);
+document.getElementById("drawerScrim").addEventListener("click", closeDrawer);
+document.getElementById("drawerNav").addEventListener("click", closeDrawer);
+document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrawer(); });
 document.getElementById("retryBtn").addEventListener("click", function () { boot(); });
 document.getElementById("backBtn").addEventListener("click", function () {
   if (state.navCount > 1 && history.length > 1) history.back();
