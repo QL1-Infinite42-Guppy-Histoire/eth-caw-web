@@ -229,6 +229,26 @@
   .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(20px); background: var(--text); color: var(--bg); font-size: 14px; padding: 11px 18px; border-radius: 10px; z-index: 200; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; max-width: min(92vw, 480px); text-align: center; box-shadow: 0 8px 28px rgba(0,0,0,.3); }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+  /* ---------- mirror inbox ---------- */
+  .mirror-card { margin: 12px 16px; background: var(--card-bg); border-radius: 16px; padding: 14px 16px; }
+  .mirror-card h3 { font-size: 17px; font-weight: 800; margin: 0 0 8px; }
+  .mirror-card .sess-note { margin-left: 0; }
+  .tokenrow { display: flex; gap: 8px; margin-top: 8px; }
+  .tokenrow input, .manual-url { flex: 1; min-width: 0; border: 1px solid var(--border-strong); background: var(--bg); color: var(--text); border-radius: 10px; padding: 10px 12px; font: inherit; font-size: 14px; outline: none; }
+  .tokenrow input:focus, .manual-url:focus { border-color: var(--accent); }
+  .mirror-card textarea { width: 100%; border: 1px solid var(--border-strong); background: var(--bg); color: var(--text); border-radius: 10px; padding: 10px 12px; font: inherit; font-size: 15px; outline: none; resize: vertical; }
+  .mirror-card textarea:focus { border-color: var(--accent); }
+  .manual-url { width: 100%; margin-top: 8px; }
+  .mirror-card .row-actions { margin-top: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .postbtn.sm { padding: 7px 16px; font-size: 14px; }
+  .mirror-item { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
+  .mirror-item.hl { background: var(--tint-blue); }
+  .mi-text { white-space: pre-wrap; word-break: break-word; font-size: 15px; line-height: 20px; }
+  .mi-meta { color: var(--muted); font-size: 13px; margin-top: 6px; display: flex; gap: 14px; }
+  .mi-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .sec-head { display: flex; align-items: center; justify-content: space-between; padding-right: 16px; }
+  .sec-head .showmore { width: auto; border-bottom: none; padding: 10px 0; }
+
   /* ---------- mobile drawer (X app nav-drawer pattern) ---------- */
   .scrim { position: fixed; inset: 0; background: rgba(91,112,131,.4); z-index: 110; opacity: 0; pointer-events: none; transition: opacity .28s ease; }
   .scrim.open { opacity: 1; pointer-events: auto; }
@@ -279,6 +299,7 @@
       <a href="#/" data-nav="home"><span data-icon="home"></span><span class="lbl" id="navHome"></span></a>
       <a href="#/explore" data-nav="explore"><span data-icon="search"></span><span class="lbl" id="navExplore"></span></a>
       <a href="#/bookmarks" data-nav="bookmarks"><span data-icon="bookmark"></span><span class="lbl" id="navBookmarks"></span></a>
+      <a href="#/mirror" data-nav="mirror"><span data-icon="mirror"></span><span class="lbl" id="navMirror"></span></a>
       <a href="https://ql1-infinite42-guppy-histoire.github.io/eth-caw/" target="_blank" rel="noopener"><span data-icon="smartphone"></span><span class="lbl" id="navOpenApp"></span></a>
     </nav>
     <a class="getapp" href="https://ql1-infinite42-guppy-histoire.github.io/eth-caw/" target="_blank" rel="noopener" id="getAppBtn"></a>
@@ -348,6 +369,7 @@
     <a href="#/" data-nav="home"><span data-icon="home"></span><span class="lbl" id="dNavHome"></span></a>
     <a href="#/explore" data-nav="explore"><span data-icon="search"></span><span class="lbl" id="dNavExplore"></span></a>
     <a href="#/bookmarks" data-nav="bookmarks"><span data-icon="bookmark"></span><span class="lbl" id="dNavBookmarks"></span></a>
+    <a href="#/mirror" data-nav="mirror"><span data-icon="mirror"></span><span class="lbl" id="dNavMirror"></span></a>
     <a href="https://ql1-infinite42-guppy-histoire.github.io/eth-caw/" target="_blank" rel="noopener"><span data-icon="smartphone"></span><span class="lbl" id="dNavOpenApp"></span></a>
   </nav>
   <div id="drawerSession"></div>
@@ -422,6 +444,33 @@ var STRINGS = {
     actFailed: "The action could not be submitted.",
     actUnavailable: "This node's feed does not include the data this action needs.",
     postedOk: "Submitted — a validator will deliver it on-chain.",
+    mirror: "Mirror",
+    mirrorWatchOff: "Automatic X watch: not configured yet — the inbox and manual intake below work now.",
+    mirrorTokenLabel: "Inbox token (paste once; stored only in this browser)",
+    mirrorTokenPh: "Paste your inbox token",
+    mirrorTokenSaved: "Token saved in this browser.",
+    mirrorSave: "Save",
+    mirrorNotify: "Enable notifications",
+    mirrorNotifyOn: "Notifications are on for this browser.",
+    mirrorNotifyDenied: "Notifications were not allowed. You can still use the inbox and manual intake.",
+    mirrorNotifyUnsupported: "This browser does not support Web Push.",
+    mirrorNeedToken: "Save your inbox token first.",
+    manualTitle: "Manual intake",
+    manualTextPh: "Paste the post text…",
+    manualUrlPh: "Source URL (optional, e.g. the X post link)",
+    manualBtn: "Open in compose",
+    manualUrlOnly: "This page cannot fetch X posts itself — paste the post text as well.",
+    manualEmpty: "Paste the post text first.",
+    pendingTitle: "Pending",
+    pendingEmpty: "Nothing waiting.",
+    pendingNeedToken: "Paste your inbox token above to load the inbox.",
+    mirrorPost: "Post to CAW",
+    mirrorDismiss: "Dismiss",
+    mirrorNeedConnect: "Posting from the mirror signs with MetaMask — connect first (in the sidebar). Your text is kept as a compose draft meanwhile.",
+    mirrorTruncated: "Shortened to fit the 420-character limit — check it in the compose box before posting.",
+    mirrorLoadErr: "Could not load the inbox.",
+    mirrorReload: "Reload",
+    sourceLink: "Source ↗",
   },
   jp: {
     brandSub: "Ethereum・コミュニティ版",
@@ -473,6 +522,33 @@ var STRINGS = {
     actFailed: "アクションを送信できませんでした。",
     actUnavailable: "このノードのフィードには、このアクションに必要なデータが含まれていません。",
     postedOk: "送信しました。バリデータがオンチェーンへ届けます。",
+    mirror: "X転写",
+    mirrorWatchOff: "Xの自動監視：未設定です（下の受信箱と手動取り込みは今すぐ使えます）。",
+    mirrorTokenLabel: "受信箱トークン（1回貼ればこのブラウザに保存されます）",
+    mirrorTokenPh: "受信箱トークンを貼り付け",
+    mirrorTokenSaved: "トークンはこのブラウザに保存されています。",
+    mirrorSave: "保存",
+    mirrorNotify: "通知を有効にする",
+    mirrorNotifyOn: "このブラウザの通知は有効です。",
+    mirrorNotifyDenied: "通知は許可されませんでした。受信箱と手動取り込みはそのまま使えます。",
+    mirrorNotifyUnsupported: "このブラウザは Web Push に対応していません。",
+    mirrorNeedToken: "先に受信箱トークンを保存してください。",
+    manualTitle: "手動取り込み",
+    manualTextPh: "投稿テキストを貼り付け…",
+    manualUrlPh: "元のURL（任意。Xの投稿リンクなど）",
+    manualBtn: "投稿欄に入れる",
+    manualUrlOnly: "このページは X の投稿を取得できません。投稿テキストも貼ってください。",
+    manualEmpty: "まず投稿テキストを貼ってください。",
+    pendingTitle: "未処理",
+    pendingEmpty: "未処理はありません。",
+    pendingNeedToken: "受信箱を読むには、上にトークンを貼ってください。",
+    mirrorPost: "CAWに投稿",
+    mirrorDismiss: "破棄",
+    mirrorNeedConnect: "転写の投稿には MetaMask の署名が必要です。先に接続してください（サイドバー）。テキストは下書きとして保持されます。",
+    mirrorTruncated: "420字に収まるよう短縮しました。投稿前に投稿欄で確認してください。",
+    mirrorLoadErr: "受信箱を読み込めませんでした。",
+    mirrorReload: "再読み込み",
+    sourceLink: "元の投稿 ↗",
   },
 };
 
@@ -506,6 +582,7 @@ var ICON_PATHS = {
   recaw: '<polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>',
   heart: '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>',
   views: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+  mirror: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
 };
 function icon(name, filled) {
   return '<svg viewBox="0 0 24 24" fill="' + (filled ? "currentColor" : "none") + '" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON_PATHS[name] + "</svg>";
@@ -947,6 +1024,7 @@ function refreshView() {
   else if (r.name === "bookmarks") renderBookmarks();
   else if (r.name === "thread") renderThread();
   else if (r.name === "profile") renderProfile();
+  else if (r.name === "mirror") renderMirror();
 }
 
 /* ---------- compose (home) + reply (thread) ---------- */
@@ -1009,6 +1087,11 @@ function submitCompose() {
   signAndSubmitAction({ actionType: 0, text: text }).then(function () {
     composeDraft = "";
     composePosting = false;
+    if (mirrorDoneAfterPost != null) {
+      var doneId = mirrorDoneAfterPost;
+      mirrorDoneAfterPost = null;
+      mirrorDone(doneId).catch(function () {});
+    }
     showToast(t().postedOk);
     state.feed = { items: [], cursor: null, done: false, loading: false, error: false };
     renderHome();
@@ -1110,6 +1193,186 @@ function onRecawAct(btn) {
   }).catch(function (e) {
     showToast((e && e.message) || t().actFailed);
   }).finally(function () { delete btn.dataset.busy; });
+}
+
+/* =====================================================================
+   X -> CAW mirror inbox (eth-caw-mirror Worker).
+   The inbox token is the user's own secret: it is NEVER in this page's
+   source — he pastes it once and it lives only in this browser's
+   localStorage (ethcaw-mirror-token). The Worker polls X for watched
+   posts, but the watch source is not configured yet, so the UI says so
+   plainly; the inbox + manual intake work regardless.
+   ===================================================================== */
+var MIRROR = {
+  baseUrl: "https://eth-caw-mirror.nepicobsv.workers.dev",
+  vapidPublicKey: "BJzw7HGeE9osCIENYC5VUSOms5iP0MDzilPaDm33Z8yjd_FItFjbGDj2kN7OPsgYfenImTCs_qvIpgZtcgslLXk",
+};
+var MIRROR_TOKEN_KEY = "ethcaw-mirror-token";
+var mirrorState = { items: null, loading: false, error: false };
+var mirrorItemsById = {};
+var mirrorDoneAfterPost = null; // pending item id resolved once its CAW post lands
+
+function mirrorToken() {
+  try { return localStorage.getItem(MIRROR_TOKEN_KEY) || ""; } catch (e) { return ""; }
+}
+function mirrorFetch(path, opts) {
+  opts = opts || {};
+  var headers = { "Content-Type": "application/json" };
+  var token = mirrorToken();
+  if (token) headers["X-Inbox-Token"] = token;
+  return fetch(MIRROR.baseUrl + path, {
+    method: opts.method || "GET",
+    headers: headers,
+    body: opts.body != null ? JSON.stringify(opts.body) : undefined,
+  }).then(function (res) {
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return res.json().catch(function () { return {}; });
+  });
+}
+function mirrorTime(item) {
+  var v = item.createdAt || item.timestamp || item.receivedAt || item.time;
+  if (v == null) return "";
+  var d = typeof v === "number" ? new Date(v) : new Date(v);
+  return isNaN(d.getTime()) ? "" : fmtRel(d.toISOString());
+}
+function prefillCompose(text) {
+  var truncated = false;
+  if (text.length > 420) {
+    var cut = text.slice(0, 420);
+    var sp = cut.lastIndexOf(" ");
+    if (sp > 200) cut = cut.slice(0, sp);
+    text = cut;
+    truncated = true;
+  }
+  composeDraft = text;
+  if (truncated) showToast(t().mirrorTruncated);
+}
+function loadMirrorPending() {
+  if (mirrorState.loading) return;
+  if (!mirrorToken()) { mirrorState.items = []; mirrorState.error = false; if (state.route.name === "mirror") renderMirror(); return; }
+  mirrorState.loading = true;
+  mirrorFetch("/pending").then(function (b) {
+    var items = Array.isArray(b) ? b : (b.items || b.pending || []);
+    mirrorState.items = items;
+    mirrorItemsById = {};
+    items.forEach(function (it) { if (it && it.id != null) mirrorItemsById[String(it.id)] = it; });
+    mirrorState.error = false;
+  }).catch(function () { mirrorState.error = true; if (!mirrorState.items) mirrorState.items = []; })
+    .finally(function () { mirrorState.loading = false; if (state.route.name === "mirror") renderMirror(); });
+}
+function mirrorItemHtml(item) {
+  var hl = state.route.id && String(state.route.id) === String(item.id);
+  var h = '<div class="mirror-item' + (hl ? " hl" : "") + '" data-mirror-item="' + esc(item.id) + '">';
+  h += '<div class="mi-text">' + linkify(item.text || "") + "</div>";
+  h += '<div class="mi-meta">';
+  if (item.sourceUrl) h += '<a href="' + esc(item.sourceUrl) + '" target="_blank" rel="noopener nofollow">' + esc(t().sourceLink) + "</a>";
+  var tm = mirrorTime(item);
+  if (tm) h += "<span>" + esc(tm) + "</span>";
+  h += "</div>";
+  h += '<div class="mi-actions"><button type="button" class="postbtn sm" data-mirror-post="' + esc(item.id) + '">' + esc(t().mirrorPost) + "</button>" +
+    '<button type="button" class="ghostbtn" data-mirror-dismiss="' + esc(item.id) + '">' + esc(t().mirrorDismiss) + "</button></div>";
+  h += "</div>";
+  return h;
+}
+function renderMirror() {
+  var el = document.getElementById("view");
+  var h = "";
+  if (!sess || !hasName()) {
+    h += '<div class="ro-card"><span>' + esc(t().mirrorNeedConnect) + "</span></div>";
+  }
+  // setup card
+  var saved = !!mirrorToken();
+  var pushOk = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  var notifyOn = pushOk && Notification.permission === "granted";
+  h += '<div class="mirror-card"><h3>' + esc(t().mirror) + "</h3>";
+  h += '<p class="sess-note">' + esc(t().mirrorWatchOff) + "</p>";
+  h += '<label class="sess-note" for="mirrorTokenInput">' + esc(t().mirrorTokenLabel) + "</label>";
+  h += '<div class="tokenrow"><input id="mirrorTokenInput" type="password" autocomplete="off" placeholder="' + esc(saved ? t().mirrorTokenSaved : t().mirrorTokenPh) + '">' +
+    '<button type="button" class="postbtn sm" data-mirror-save>' + esc(t().mirrorSave) + "</button></div>";
+  if (saved) h += '<p class="sess-note">' + esc(t().mirrorTokenSaved) + "</p>";
+  h += '<div class="row-actions">';
+  if (!pushOk) h += '<span class="sess-note">' + esc(t().mirrorNotifyUnsupported) + "</span>";
+  else if (notifyOn) h += '<span class="sess-note">' + esc(t().mirrorNotifyOn) + "</span>";
+  else h += '<button type="button" class="ghostbtn" data-mirror-notify>' + esc(t().mirrorNotify) + "</button>";
+  h += "</div></div>";
+  // manual intake card
+  h += '<div class="mirror-card"><h3>' + esc(t().manualTitle) + "</h3>" +
+    '<textarea id="mirrorManualText" rows="4" placeholder="' + esc(t().manualTextPh) + '"></textarea>' +
+    '<input class="manual-url" id="mirrorManualUrl" type="url" placeholder="' + esc(t().manualUrlPh) + '">' +
+    '<div class="row-actions"><button type="button" class="postbtn sm" data-mirror-manual>' + esc(t().manualBtn) + '</button>' +
+    '<span class="sess-note err hidden" id="mirrorManualMsg"></span></div></div>';
+  // pending list
+  h += '<div class="sec-head"><div class="sec-title">' + esc(t().pendingTitle) + '</div>' +
+    '<button type="button" class="showmore" data-mirror-reload>' + esc(t().mirrorReload) + "</button></div>";
+  if (!mirrorToken()) h += '<div class="state-box center"><p>' + esc(t().pendingNeedToken) + "</p></div>";
+  else if (mirrorState.loading && mirrorState.items === null) h += loadingHtml();
+  else if (mirrorState.error && !(mirrorState.items || []).length) h += '<div class="state-box center"><p class="err">' + esc(t().mirrorLoadErr) + "</p></div>";
+  else if (!mirrorState.items || !mirrorState.items.length) h += '<div class="state-box center"><p>' + esc(t().pendingEmpty) + "</p></div>";
+  else h += mirrorState.items.map(mirrorItemHtml).join("");
+  el.innerHTML = h;
+}
+function mirrorDone(id) {
+  return mirrorFetch("/done", { method: "POST", body: { id: isNaN(Number(id)) ? id : Number(id) } });
+}
+function onMirrorPost(btn) {
+  var item = mirrorItemsById[btn.getAttribute("data-mirror-post")];
+  if (!item) return;
+  prefillCompose(item.text || "");
+  mirrorDoneAfterPost = item.id;
+  location.hash = "#/";
+  setTimeout(function () {
+    var ta = document.getElementById("composeText");
+    if (ta) ta.focus();
+  }, 80);
+}
+function onMirrorDismiss(btn) {
+  var id = btn.getAttribute("data-mirror-dismiss");
+  btn.disabled = true;
+  mirrorDone(id).then(function () {
+    mirrorState.items = (mirrorState.items || []).filter(function (it) { return String(it.id) !== String(id); });
+    delete mirrorItemsById[String(id)];
+    renderMirror();
+  }).catch(function () {
+    btn.disabled = false;
+    showToast(t().mirrorLoadErr);
+  });
+}
+function onMirrorManual() {
+  var text = (document.getElementById("mirrorManualText").value || "").trim();
+  var url = (document.getElementById("mirrorManualUrl").value || "").trim();
+  var msg = document.getElementById("mirrorManualMsg");
+  if (!text) {
+    if (msg) { msg.textContent = url ? t().manualUrlOnly : t().manualEmpty; msg.classList.remove("hidden"); }
+    return;
+  }
+  prefillCompose(text);
+  mirrorDoneAfterPost = null;
+  location.hash = "#/";
+  setTimeout(function () {
+    var ta = document.getElementById("composeText");
+    if (ta) ta.focus();
+  }, 80);
+}
+function urlB64ToUint8Array(b64) {
+  var pad = "=".repeat((4 - (b64.length % 4)) % 4);
+  var raw = atob((b64 + pad).replace(/-/g, "+").replace(/_/g, "/"));
+  var out = new Uint8Array(raw.length);
+  for (var i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+  return out;
+}
+function onMirrorNotify() {
+  if (!mirrorToken()) { showToast(t().mirrorNeedToken); return; }
+  Notification.requestPermission().then(function (perm) {
+    if (perm !== "granted") { showToast(t().mirrorNotifyDenied); renderMirror(); return; }
+    return mirrorFetch("/vapid-public").catch(function () { return null; }).then(function (v) {
+      var key = (v && (v.publicKey || v.key)) || MIRROR.vapidPublicKey;
+      return navigator.serviceWorker.ready.then(function (reg) {
+        return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8Array(key) });
+      }).then(function (sub) {
+        return mirrorFetch("/subscribe", { method: "POST", body: { subscription: sub.toJSON ? sub.toJSON() : sub } });
+      }).then(function () { renderMirror(); });
+    });
+  }).catch(function () { showToast(t().mirrorNotifyDenied); });
 }
 
 /* ---------- node discovery (unchanged behavior) ---------- */
@@ -1505,6 +1768,7 @@ function parseRoute() {
   if (!parts.length) return { name: "home" };
   if (parts[0] === "explore") return { name: "explore" };
   if (parts[0] === "bookmarks") return { name: "bookmarks" };
+  if (parts[0] === "mirror") return { name: "mirror", id: parts[1] ? decodeURIComponent(parts[1]) : undefined };
   if (parts[0] === "post" && parts[1]) return { name: "thread", id: decodeURIComponent(parts[1]) };
   if (parts[0] === "user" && parts[1]) return { name: "profile", username: decodeURIComponent(parts[1]) };
   return { name: "home" };
@@ -1524,6 +1788,9 @@ function applyRoute() {
     loadNames();
   } else if (r.name === "bookmarks") {
     renderBookmarks();
+  } else if (r.name === "mirror") {
+    renderMirror();
+    loadMirrorPending();
   } else if (r.name === "thread") {
     if (changed || !state.thread || state.thread.id !== r.id) openThread(r.id);
     renderThread();
@@ -1539,6 +1806,7 @@ function syncChrome() {
   var back = false;
   if (r.name === "explore") title = t().explore;
   else if (r.name === "bookmarks") title = t().bookmarks;
+  else if (r.name === "mirror") title = t().mirror;
   else if (r.name === "thread") { title = t().post; back = true; }
   else if (r.name === "profile") {
     title = state.profile && state.profile.user ? displayName(state.profile.user) : (r.username ? "@" + r.username : t().home);
@@ -1576,6 +1844,7 @@ function applyStaticTexts() {
   document.getElementById("navHome").textContent = t().home;
   document.getElementById("navExplore").textContent = t().explore;
   document.getElementById("navBookmarks").textContent = t().bookmarks;
+  document.getElementById("navMirror").textContent = t().mirror;
   document.getElementById("navOpenApp").textContent = t().openApp;
   document.getElementById("getAppBtn").textContent = t().getAppBtn;
   document.getElementById("railSearchInput").placeholder = t().searchPh;
@@ -1597,6 +1866,7 @@ function applyStaticTexts() {
   document.getElementById("dNavHome").textContent = t().home;
   document.getElementById("dNavExplore").textContent = t().explore;
   document.getElementById("dNavBookmarks").textContent = t().bookmarks;
+  document.getElementById("dNavMirror").textContent = t().mirror;
   document.getElementById("dNavOpenApp").textContent = t().openApp;
   document.getElementById("langToggleD").textContent = lang === "jp" ? "EN" : "日本語";
   document.getElementById("themeToggleD").textContent = dark ? (lang === "jp" ? "白背景" : "Light") : (lang === "jp" ? "黒背景" : "Dark");
@@ -1675,6 +1945,24 @@ document.addEventListener("click", function (e) {
   }
   if (e.target.closest("#composePostBtn")) { submitCompose(); return; }
   if (e.target.closest("#replyPostBtn")) { submitReply(); return; }
+  if (e.target.closest("[data-mirror-save]")) {
+    var tin = document.getElementById("mirrorTokenInput");
+    var val = tin ? tin.value.trim() : "";
+    if (val) {
+      try { localStorage.setItem(MIRROR_TOKEN_KEY, val); } catch (err) {}
+      mirrorState.items = null;
+      renderMirror();
+      loadMirrorPending();
+    }
+    return;
+  }
+  if (e.target.closest("[data-mirror-notify]")) { onMirrorNotify(); return; }
+  if (e.target.closest("[data-mirror-manual]")) { onMirrorManual(); return; }
+  if (e.target.closest("[data-mirror-reload]")) { mirrorState.items = null; renderMirror(); loadMirrorPending(); return; }
+  var mp = e.target.closest("[data-mirror-post]");
+  if (mp) { onMirrorPost(mp); return; }
+  var md = e.target.closest("[data-mirror-dismiss]");
+  if (md) { onMirrorDismiss(md); return; }
   var lk = e.target.closest("[data-like]");
   if (lk) { e.stopPropagation(); onLikeAct(lk); return; }
   var rc = e.target.closest("[data-recaw]");
@@ -1751,6 +2039,12 @@ function boot() {
 }
 hydrateIcons(document);
 applyStaticTexts();
+/* Mirror push: register the service worker at startup. It only
+   handles push notifications — no fetch interception — so the
+   read-only experience is unaffected for everyone. */
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch(function () {});
+}
 (function () {
   var userParam = null;
   try { userParam = new URLSearchParams(location.search).get("user"); } catch (e) {}
