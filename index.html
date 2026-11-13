@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CAW Web Viewer — Ethereum (community deployment, read-only)</title>
-<meta name="description" content="Read-only web viewer for the community CAW deployment on Ethereum: timeline, names and profiles, read from public nodes.">
+<title>CAW Web Viewer — Ethereum (community deployment)</title>
+<meta name="description" content="Web viewer for the community CAW deployment on Ethereum: timeline, names and profiles from public nodes; connect MetaMask to post, like and recaw.">
 <link rel="icon" type="image/jpeg" href="assets/logo.jpg">
 <script>
   if (localStorage.getItem("guppy-theme") === "dark") document.documentElement.dataset.theme = "dark";
@@ -190,6 +190,45 @@
   .rail-foot a { color: var(--muted); }
   .rail-foot a:hover { text-decoration: underline; }
 
+  /* ---------- session / compose (MetaMask actions) ---------- */
+  #sideSession { margin-top: 14px; }
+  .connectbtn { display: block; width: 90%; text-align: center; border: 1px solid var(--accent); color: var(--accent); font-weight: 700; font-size: 15px; border-radius: 999px; padding: 11px 18px; }
+  .connectbtn:hover { background: var(--tint-blue); }
+  .connectbtn:disabled { opacity: .55; cursor: default; }
+  .drawer .connectbtn { width: 100%; }
+  .sess-note { font-size: 13px; color: var(--muted); line-height: 1.5; margin: 4px 2px 10px; }
+  .sess-note a { font-weight: 700; }
+  .userchip { display: flex; gap: 10px; align-items: flex-start; padding: 4px 2px; }
+  .userchip .uc-main { flex: 1; min-width: 0; }
+  .userchip .uc-name { font-weight: 800; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .userchip .uc-handle { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .userchip .uc-dep { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .userchip .uc-dep b { color: var(--text); }
+  .sess-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .postbtn { background: var(--accent); color: #fff; font-weight: 700; font-size: 15px; border-radius: 999px; padding: 9px 22px; }
+  .postbtn:hover { background: var(--accent-hover); }
+  .postbtn:disabled { opacity: .5; cursor: default; background: var(--accent); }
+  .ghostbtn { border: 1px solid var(--border-strong); color: var(--text); font-weight: 700; font-size: 14px; border-radius: 999px; padding: 8px 16px; }
+  .ghostbtn:hover { background: var(--hover); }
+  .compose { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
+  .compose textarea, .replybox textarea { width: 100%; border: none; resize: none; background: none; color: var(--text); font: inherit; font-size: 17px; line-height: 1.4; outline: none; padding: 6px 0 2px; }
+  .compose textarea::placeholder, .replybox textarea::placeholder { color: var(--muted); }
+  .compose-foot { display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--border); padding-top: 10px; margin-top: 6px; }
+  .cost-line { flex: 1; min-width: 0; color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+  .charwrap { display: inline-flex; align-items: center; gap: 6px; flex: none; }
+  .ring { width: 26px; height: 26px; transform: rotate(-90deg); }
+  .ring circle { fill: none; stroke-width: 2.5; }
+  .ring .ring-bg { stroke: var(--border); }
+  .ring .ring-fg { stroke: var(--accent); stroke-linecap: round; }
+  .ring.over .ring-fg { stroke: #f4212e; }
+  .charnum { font-size: 13px; color: var(--muted); min-width: 18px; text-align: right; }
+  .charnum.over { color: #f4212e; }
+  .compose-msg { font-size: 13.5px; margin-top: 8px; }
+  .replybox { padding: 12px 16px 10px; border-bottom: 1px solid var(--border); }
+  .replybox .compose-foot { border-top: none; padding-top: 4px; }
+  .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(20px); background: var(--text); color: var(--bg); font-size: 14px; padding: 11px 18px; border-radius: 10px; z-index: 200; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; max-width: min(92vw, 480px); text-align: center; box-shadow: 0 8px 28px rgba(0,0,0,.3); }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
   /* ---------- mobile drawer (X app nav-drawer pattern) ---------- */
   .scrim { position: fixed; inset: 0; background: rgba(91,112,131,.4); z-index: 110; opacity: 0; pointer-events: none; transition: opacity .28s ease; }
   .scrim.open { opacity: 1; pointer-events: auto; }
@@ -243,6 +282,7 @@
       <a href="https://ql1-infinite42-guppy-histoire.github.io/eth-caw/" target="_blank" rel="noopener"><span data-icon="smartphone"></span><span class="lbl" id="navOpenApp"></span></a>
     </nav>
     <a class="getapp" href="https://ql1-infinite42-guppy-histoire.github.io/eth-caw/" target="_blank" rel="noopener" id="getAppBtn"></a>
+    <div id="sideSession"></div>
     <div class="side-bottom">
       <div class="nodebox" id="nodeBox">
         <span class="dot"></span>
@@ -295,6 +335,7 @@
   </aside>
 </div>
 
+<div class="toast" id="toast"></div>
 <div class="scrim" id="drawerScrim"></div>
 <aside class="drawer" id="drawer" aria-hidden="true">
   <div class="drawer-head">
@@ -318,11 +359,13 @@
 
 <script>
 "use strict";
-/* Read-only CAW web viewer.
-   Data comes only from public CAW nodes (GET requests). This page never
-   asks for a signature, a key, or a wallet connection: posting, liking,
-   minting and sending live in the app. Bookmarks are the only local
-   state besides language/theme, and they live in this browser only. */
+/* CAW web viewer.
+   Reads come from public CAW nodes (GET requests). Visitors who do not
+   connect a wallet get the read-only experience. Connected visitors
+   sign with MetaMask only (personal_sign session + EIP-712 actions,
+   mirroring the app's protocol client) — this page never sees, asks
+   for, or stores a private key or seed phrase. Minting and sending
+   live in the app. Bookmarks live in this browser only. */
 var STATIC_NODES_URL = "https://ql1-infinite42-guppy-histoire.github.io/eth-caw/nodes.json";
 var REGISTRY_NODES_URL = "https://eth-caw-registry.nepicobsv.workers.dev/nodes?preset=mainnet";
 var EXPECTED_NETWORK_ID = 1; // Uruk (Base) on this deployment
@@ -360,6 +403,25 @@ var STRINGS = {
     bookmarksEmpty: "No bookmarks yet. Use the bookmark icon on any post to save it here.",
     footerNote: "An independent community deployment implementing Gilgamesh's published CAW code and manifesto, unmodified. Not an official service.",
     bookmarkLabel: "Bookmark",
+    connect: "Connect MetaMask",
+    connecting: "Connecting…",
+    disconnect: "Disconnect",
+    noMetaMask: "MetaMask was not found. Install MetaMask, or open this page in the MetaMask browser, to post from the web.",
+    roConnectNote: "Connect MetaMask to post, like and recaw from this page.",
+    postAction: "Post",
+    posting: "Posting…",
+    composePh: "What's happening?",
+    replyPh: "Post your reply",
+    replyBtn: "Reply",
+    costFmt: "Post cost {C} CAW + tip {T} CAW, paid from your name's deposited CAW",
+    replyCostFmt: "Reply cost {C} CAW + tip {T} CAW, paid from your name's deposited CAW",
+    indexingNote: "The node is still indexing this wallet's names. Wait a moment, then retry.",
+    verifyFailed: "Verification failed.",
+    noNameNote: "This wallet owns no CAW name yet. A name is needed to post — minting is done in the app.",
+    getName: "About minting a name →",
+    actFailed: "The action could not be submitted.",
+    actUnavailable: "This node's feed does not include the data this action needs.",
+    postedOk: "Submitted — a validator will deliver it on-chain.",
   },
   jp: {
     brandSub: "Ethereum・コミュニティ版",
@@ -392,6 +454,25 @@ var STRINGS = {
     bookmarksEmpty: "まだブックマークがありません。投稿のブックマークアイコンを押すと、ここに保存されます。",
     footerNote: "Gilgamesh の公開した CAW のコードとマニフェストを、無改変でコミュニティが独立にデプロイしたものです。公式サービスではありません。",
     bookmarkLabel: "ブックマーク",
+    connect: "MetaMaskを接続",
+    connecting: "接続中…",
+    disconnect: "切断",
+    noMetaMask: "MetaMask が見つかりません。投稿するには MetaMask を入れるか、MetaMask ブラウザでこのページを開いてください。",
+    roConnectNote: "MetaMaskを接続すると、このページから投稿・いいね・Recawができます。",
+    postAction: "投稿",
+    posting: "投稿中…",
+    composePh: "いまどうしてる？",
+    replyPh: "返信をポスト",
+    replyBtn: "返信",
+    costFmt: "投稿コスト {C} CAW + チップ {T} CAW（名前の預け入れCAWから支払われます）",
+    replyCostFmt: "返信コスト {C} CAW + チップ {T} CAW（名前の預け入れCAWから支払われます）",
+    indexingNote: "ノードがこのウォレットの名前を索引中です。少し待ってから再試行してください。",
+    verifyFailed: "認証に失敗しました。",
+    noNameNote: "このウォレットはまだ CAW の名前を持っていません。投稿には名前が必要です。名前の発行はアプリからどうぞ。",
+    getName: "名前の発行について →",
+    actFailed: "アクションを送信できませんでした。",
+    actUnavailable: "このノードのフィードには、このアクションに必要なデータが含まれていません。",
+    postedOk: "送信しました。バリデータがオンチェーンへ届けます。",
   },
 };
 
@@ -406,7 +487,8 @@ function esc(s) {
 function fetchJson(url, timeoutMs) {
   var ctrl = new AbortController();
   var timer = setTimeout(function () { ctrl.abort(); }, timeoutMs || 8000);
-  return fetch(url, { signal: ctrl.signal }).then(function (res) {
+  var init = { signal: ctrl.signal, credentials: (typeof sess !== "undefined" && sess) ? "include" : "same-origin" };
+  return fetch(url, init).then(function (res) {
     clearTimeout(timer);
     if (!res.ok) throw new Error("HTTP " + res.status);
     return res.json();
@@ -556,6 +638,480 @@ var state = {
   navCount: 0,
 };
 
+/* =====================================================================
+   MetaMask actions — a direct mirror of the app's protocol client
+   (eth-caw-app/src/lib/api.ts + src/lib/actions.ts + src/config.ts).
+   The signing key never leaves MetaMask: this page only asks it to
+   sign (personal_sign for the session, eth_signTypedData_v4 for
+   actions). No private-key handling exists anywhere in this page.
+   ===================================================================== */
+var L2_CHAIN_ID = 8453; // config.ts mainnet preset l2ChainId
+var CAW_NETWORK_ID = 1; // config.ts mainnet preset cawNetworkId
+var CAW_ACTIONS_L2 = "0xf4dFCf0EF472E8aaD3783479051f61EC574C6A8E"; // preset.cawActionsL2
+var L2_RPC_URL = "https://mainnet.base.org"; // preset.l2RpcUrl
+var ACTION_DOMAIN = { name: "Caw Protocol", version: "1", chainId: L2_CHAIN_ID, verifyingContract: CAW_ACTIONS_L2 }; // config.ts actionDomain()
+var ACTION_TYPES = { // config.ts ACTION_TYPES — exact field list
+  ActionData: [
+    { name: "actionType", type: "uint8" },
+    { name: "senderId", type: "uint32" },
+    { name: "receiverId", type: "uint32" },
+    { name: "receiverCawonce", type: "uint32" },
+    { name: "networkId", type: "uint32" },
+    { name: "cawonce", type: "uint32" },
+    { name: "recipients", type: "uint32[]" },
+    { name: "amounts", type: "uint64[]" },
+    { name: "text", type: "bytes" },
+  ],
+};
+var EIP712_DOMAIN_TYPE = [
+  { name: "name", type: "string" },
+  { name: "version", type: "string" },
+  { name: "chainId", type: "uint256" },
+  { name: "verifyingContract", type: "address" },
+];
+var NEXT_CAWONCE_SELECTOR = "0x492046f6"; // nextCawonce(uint32) — actions.ts CAW_ACTIONS_ABI
+var MAX_VALIDATOR_TIP = 10000n; // api.ts MAX_VALIDATOR_TIP (whole CAW)
+var POST_COST_CAW = 5000; // protocol action cost, metered by the contract
+var SESS_KEY = "ethcaw-web-session";
+
+var sess = null;          // { address, authorizedTokenIds, expiresAt, node }
+var sessUser = null;      // by-token profile of the sender name
+var sessCounts = null;    // { following, followers } when the node reports them
+var sessBusy = false;
+var sessIndexing = false; // last verify answered 202 (node still indexing)
+var sessError = "";
+var tipCache = null;      // BigInt, whole CAW
+var composeDraft = "";
+var composeFocus = false;
+var composeCaret = null;
+var composePosting = false;
+var replyDraft = "";
+var replyPosting = false;
+var pendingReplyFocus = false;
+var threadEff = null;
+
+function senderId() {
+  return sess && sess.authorizedTokenIds && sess.authorizedTokenIds.length ? sess.authorizedTokenIds[0] : null;
+}
+function hasName() { return senderId() != null; }
+function hostOf(url) { return url.replace(/^https?:\/\//, "").replace(/\/.*$/, ""); } // api.ts hostOf()
+
+function saveSess() {
+  try { if (sess) localStorage.setItem(SESS_KEY, JSON.stringify(sess)); else localStorage.removeItem(SESS_KEY); } catch (e) {}
+}
+function restoreSess(node) {
+  try {
+    var s = JSON.parse(localStorage.getItem(SESS_KEY) || "null");
+    if (s && s.node === node && s.address && s.expiresAt > Date.now()) { sess = s; return true; }
+  } catch (e) {}
+  return false;
+}
+
+/* smltxt.js (524 KB table) loads only when a connected user needs it. */
+function ensureSml() {
+  if (window.smlCompressText) return Promise.resolve();
+  if (ensureSml.p) return ensureSml.p;
+  ensureSml.p = new Promise(function (resolve, reject) {
+    var s = document.createElement("script");
+    s.src = "assets/smltxt.js";
+    s.onload = function () { resolve(); };
+    s.onerror = function () { reject(new Error("smltxt load failed")); };
+    document.head.appendChild(s);
+  });
+  return ensureSml.p;
+}
+
+/* api.ts getValidatorTip(): the node proposes the tip, the user's
+   signature pays it — never sign more than the cap. */
+function fetchValidatorTip() {
+  return fetchJson(state.node + "/api/validator-analytics/tip-config", 8000).then(function (body) {
+    var tip = BigInt(body && body.baseTip != null ? body.baseTip : 1000);
+    if (tip > MAX_VALIDATOR_TIP) tip = MAX_VALIDATOR_TIP;
+    tipCache = tip;
+    return tip;
+  });
+}
+function tipForDisplay() { return tipCache != null ? tipCache : 1000n; }
+function costLineText(isReply) {
+  var fmt = isReply ? t().replyCostFmt : t().costFmt;
+  return fmt.replace("{C}", POST_COST_CAW.toLocaleString("en-US")).replace("{T}", Number(tipForDisplay()).toLocaleString("en-US"));
+}
+
+/* actions.ts nextCawonceOnChain(): the chain is the only trustworthy
+   cawonce source — read straight from CawActions on Base. */
+function nextCawonceOnChain(id) {
+  var data = NEXT_CAWONCE_SELECTOR + Number(id).toString(16).padStart(64, "0");
+  return fetch(L2_RPC_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_call", params: [{ to: CAW_ACTIONS_L2, data: data }, "latest"] }),
+  }).then(function (r) { return r.json(); }).then(function (j) {
+    if (!j || !j.result) throw new Error("nextCawonce read failed");
+    return Number(BigInt(j.result));
+  });
+}
+
+/* actions.ts signAndSubmit() + api.ts submitAction(), mirrored.
+   On HTTP 409 cawonce_collision the node returns suggestedCawonce —
+   re-sign once with it, then give up plainly. */
+function signAndSubmitAction(draft) {
+  return ensureSml().then(function () { return fetchValidatorTip(); }).then(function (tip) {
+    return nextCawonceOnChain(senderId()).then(function (cawonce) {
+      return submitSignedAction(draft, tip, cawonce, false);
+    });
+  });
+}
+function submitSignedAction(draft, tip, cawonce, retried) {
+  var data = { // actions.ts `data` — field-for-field
+    actionType: draft.actionType,
+    senderId: senderId(),
+    receiverId: draft.receiverId != null ? draft.receiverId : 0,
+    receiverCawonce: draft.receiverCawonce != null ? draft.receiverCawonce : 0,
+    networkId: CAW_NETWORK_ID,
+    cawonce: cawonce,
+    recipients: [],
+    amounts: [tip.toString()],
+    text: draft.text ? window.smlCompressText(draft.text) : "0x",
+  };
+  var typedData = {
+    types: { EIP712Domain: EIP712_DOMAIN_TYPE, ActionData: ACTION_TYPES.ActionData },
+    primaryType: "ActionData",
+    domain: ACTION_DOMAIN,
+    message: data,
+  };
+  return window.ethereum.request({
+    method: "eth_signTypedData_v4",
+    params: [sess.address, JSON.stringify(typedData)],
+  }).then(function (signature) {
+    var payload = { data: data, domain: ACTION_DOMAIN, types: ACTION_TYPES, signature: signature }; // api.ts submitAction() body
+    return fetch(state.node + "/api/actions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(payload),
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (body) {
+        if (res.status === 409 && body && body.suggestedCawonce != null && !retried) {
+          return submitSignedAction(draft, tip, Number(body.suggestedCawonce), true);
+        }
+        if (res.status !== 201 && res.status !== 200) {
+          throw new Error((body && (body.error || body.message)) || ("HTTP " + res.status));
+        }
+        return body;
+      });
+    });
+  });
+}
+
+/* api.ts verifyWallet(): personal_sign the ownership message, POST it,
+   keep the cookie session the browser stores. 202 = IndexingError. */
+function connectWallet() {
+  if (!window.ethereum || !state.node || sessBusy) return;
+  sessBusy = true; sessError = ""; sessIndexing = false;
+  renderSessionUI();
+  var address = null;
+  window.ethereum.request({ method: "eth_requestAccounts" }).then(function (accounts) {
+    address = accounts && accounts[0];
+    if (!address) throw new Error("no account");
+    var ts = Math.floor(Date.now() / 1000);
+    var message = "Verify wallet ownership for CAW\nHost: " + hostOf(state.node) + "\nChainId: " + L2_CHAIN_ID + "\nTimestamp: " + ts;
+    return window.ethereum.request({ method: "personal_sign", params: [message, address] }).then(function (signature) {
+      return fetch(state.node + "/api/auth/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ message: message, signature: signature }),
+      }).then(function (res) {
+        if (res.status === 202) { sessIndexing = true; return null; }
+        if (!res.ok) throw new Error(t().verifyFailed + " (HTTP " + res.status + ")");
+        return res.json();
+      }).then(function (body) {
+        if (!body) return; // indexing path
+        sess = {
+          address: address,
+          authorizedTokenIds: body.authorizedTokenIds || [],
+          expiresAt: body.expiresAt || Date.now() + 24 * 3600 * 1000,
+          node: state.node,
+        };
+        saveSess();
+        return loadSessUser().then(function () {
+          fetchValidatorTip().catch(function () {});
+          ensureSml().then(function () {
+            setTimeout(function () { try { window.smlCompressText(""); } catch (e) {} }, 600);
+          }).catch(function () {});
+        });
+      });
+    });
+  }).catch(function (e) {
+    sessError = (e && e.message) || t().verifyFailed;
+  }).finally(function () {
+    sessBusy = false;
+    renderSessionUI();
+    refreshView();
+  });
+}
+function disconnectWallet() {
+  // api.ts has no logout endpoint — disconnecting clears local state;
+  // the node's cookie simply stops being used by this page.
+  sess = null; sessUser = null; sessCounts = null; sessIndexing = false; sessError = "";
+  saveSess();
+  renderSessionUI();
+  refreshView();
+}
+function loadSessUser() {
+  var id = senderId();
+  if (id == null || !state.node) { sessUser = null; return Promise.resolve(); }
+  return api("/api/users/by-token/" + encodeURIComponent(id)).then(function (b) {
+    sessUser = (b && (b.user || b)) || null;
+    if (sessUser && sessUser.username) {
+      return api("/api/users/" + encodeURIComponent(sessUser.username)).then(function (p) {
+        var u = (p && (p.user || p)) || {};
+        if (typeof u.followingCount === "number" && typeof u.followerCount === "number") {
+          sessCounts = { following: u.followingCount, followers: u.followerCount };
+        }
+      }).catch(function () {});
+    }
+  }).catch(function () { sessUser = null; });
+}
+
+/* ---------- session UI (sidebar + drawer) ---------- */
+function sessInnerHtml() {
+  if (!window.ethereum) return '<p class="sess-note">' + esc(t().noMetaMask) + "</p>";
+  if (!state.node) return '<p class="sess-note">' + esc(t().nodeSearching) + "</p>";
+  if (sessBusy) return '<button type="button" class="connectbtn" disabled>' + esc(t().connecting) + "</button>";
+  if (!sess) {
+    var h = '<button type="button" class="connectbtn" data-connect>' + esc(t().connect) + "</button>";
+    if (sessIndexing) h += '<p class="sess-note">' + esc(t().indexingNote) + "</p>";
+    if (sessError) h += '<p class="sess-note err">' + esc(sessError) + "</p>";
+    return h;
+  }
+  if (!hasName()) {
+    return '<p class="sess-note">' + esc(t().noNameNote) + ' <a href="' + INTRO_URL + '" target="_blank" rel="noopener">' + esc(t().getName) + "</a></p>" +
+      '<div class="sess-actions"><button type="button" class="ghostbtn" data-disconnect>' + esc(t().disconnect) + "</button></div>";
+  }
+  var u = sessUser || { tokenId: senderId() };
+  var dep = fmtCaw(u.onChainStakeWei);
+  var chip = '<div class="userchip">' + avatarHtml(u) + '<div class="uc-main">' +
+    '<div class="uc-name">' + esc(displayName(u)) + '</div>' +
+    '<div class="uc-handle">@' + esc(u.username || ("#" + senderId())) + "</div>" +
+    (dep !== null ? '<div class="uc-dep">' + esc(t().deposit) + ": <b>" + esc(dep) + "</b></div>" : "") +
+    "</div></div>";
+  chip += '<div class="sess-actions"><button type="button" class="postbtn" data-focus-compose>' + esc(t().postAction) + '</button>' +
+    '<button type="button" class="ghostbtn" data-disconnect>' + esc(t().disconnect) + "</button></div>";
+  return chip;
+}
+function renderSessionUI() {
+  var side = document.getElementById("sideSession");
+  var dr = document.getElementById("drawerSession");
+  var html = sessInnerHtml();
+  if (side) side.innerHTML = html;
+  if (dr) dr.innerHTML = html;
+  // Drawer header block echoes the X drawer: avatar, name, @handle, counts.
+  var dName = document.getElementById("drawerName");
+  var dHandle = document.getElementById("brandSubD");
+  var dCounts = document.getElementById("drawerCounts");
+  var dAvatar = document.getElementById("drawerAvatar");
+  if (!dName) return;
+  if (sess && hasName()) {
+    var u = sessUser || { tokenId: senderId() };
+    dName.textContent = displayName(u);
+    dHandle.textContent = "@" + (u.username || ("#" + senderId()));
+    var url = null;
+    if (u.avatarUrl && /^https?:\/\//.test(u.avatarUrl)) url = u.avatarUrl;
+    else if (u.image && /^https?:\/\//.test(u.image)) url = u.image;
+    if (dAvatar) dAvatar.src = url || "assets/logo.jpg";
+    if (sessCounts) {
+      dCounts.innerHTML = "<span><b>" + fmtCount(sessCounts.following) + "</b> " + esc(t().following) + "</span>" +
+        "<span><b>" + fmtCount(sessCounts.followers) + "</b> " + esc(t().followers) + "</span>";
+      dCounts.classList.remove("hidden");
+    } else if (dCounts) dCounts.classList.add("hidden");
+  } else {
+    dName.textContent = "CAW";
+    dHandle.textContent = t().brandSub;
+    if (dAvatar) dAvatar.src = "assets/logo.jpg";
+    if (dCounts) dCounts.classList.add("hidden");
+  }
+}
+function showToast(msg) {
+  var el = document.getElementById("toast");
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(function () { el.classList.remove("show"); }, 3400);
+}
+function refreshView() {
+  var r = state.route;
+  if (r.name === "home") renderHome();
+  else if (r.name === "explore") renderExplore();
+  else if (r.name === "bookmarks") renderBookmarks();
+  else if (r.name === "thread") renderThread();
+  else if (r.name === "profile") renderProfile();
+}
+
+/* ---------- compose (home) + reply (thread) ---------- */
+function ringSvg(id) {
+  return '<svg class="ring" id="' + id + '" viewBox="0 0 28 28"><circle class="ring-bg" cx="14" cy="14" r="10"></circle>' +
+    '<circle class="ring-fg" cx="14" cy="14" r="10" stroke-dasharray="62.83" stroke-dashoffset="62.83"></circle></svg>';
+}
+function composeHtml() {
+  var u = sessUser || { tokenId: senderId() };
+  return '<div class="compose"><div class="post-row">' + avatarHtml(u) + '<div class="post-main">' +
+    '<textarea id="composeText" rows="3" placeholder="' + esc(t().composePh) + '">' + esc(composeDraft) + "</textarea>" +
+    '<div class="compose-foot"><span class="cost-line">' + esc(costLineText(false)) + "</span>" +
+    '<span class="charwrap">' + ringSvg("composeRing") + '<span class="charnum" id="composeNum"></span></span>' +
+    '<button type="button" class="postbtn" id="composePostBtn" disabled>' + esc(t().postAction) + "</button></div>" +
+    '<div class="compose-msg err hidden" id="composeMsg"></div>' +
+    "</div></div></div>";
+}
+function updateComposeUI() {
+  var ta = document.getElementById("composeText");
+  var btn = document.getElementById("composePostBtn");
+  if (!ta || !btn) return;
+  var len = ta.value.length;
+  var over = len > 420;
+  btn.disabled = composePosting || !ta.value.trim() || over;
+  btn.textContent = composePosting ? t().posting : t().postAction;
+  var ring = document.getElementById("composeRing");
+  if (ring) {
+    var fg = ring.querySelector(".ring-fg");
+    var frac = Math.min(len / 420, 1);
+    if (fg) fg.setAttribute("stroke-dashoffset", String(62.83 * (1 - frac)));
+    ring.classList.toggle("over", over);
+  }
+  var num = document.getElementById("composeNum");
+  if (num) {
+    num.textContent = len > 400 ? String(420 - len) : "";
+    num.classList.toggle("over", over);
+  }
+}
+function wireCompose() {
+  var ta = document.getElementById("composeText");
+  if (!ta) return;
+  ta.addEventListener("input", function () {
+    composeDraft = ta.value;
+    composeCaret = ta.selectionStart;
+    updateComposeUI();
+  });
+  ta.addEventListener("focus", function () { composeFocus = true; });
+  ta.addEventListener("blur", function () { composeFocus = false; });
+  if (composeFocus) {
+    ta.focus();
+    try { ta.setSelectionRange(composeCaret, composeCaret); } catch (e) {}
+  }
+  updateComposeUI();
+}
+function submitCompose() {
+  var text = composeDraft;
+  if (!text.trim() || text.length > 420 || composePosting) return;
+  composePosting = true;
+  updateComposeUI();
+  signAndSubmitAction({ actionType: 0, text: text }).then(function () {
+    composeDraft = "";
+    composePosting = false;
+    showToast(t().postedOk);
+    state.feed = { items: [], cursor: null, done: false, loading: false, error: false };
+    renderHome();
+    loadFeed(false);
+  }).catch(function (e) {
+    composePosting = false;
+    updateComposeUI();
+    var m = document.getElementById("composeMsg");
+    if (m) { m.textContent = (e && e.message) || t().actFailed; m.classList.remove("hidden"); }
+  });
+}
+function replyBoxHtml() {
+  var u = sessUser || { tokenId: senderId() };
+  return '<div class="replybox"><div class="post-row">' + avatarHtml(u) + '<div class="post-main">' +
+    '<textarea id="replyText" rows="2" placeholder="' + esc(t().replyPh) + '">' + esc(replyDraft) + "</textarea>" +
+    '<div class="compose-foot"><span class="cost-line">' + esc(costLineText(true)) + "</span>" +
+    '<button type="button" class="postbtn" id="replyPostBtn">' + esc(t().replyBtn) + "</button></div>" +
+    '<div class="compose-msg err hidden" id="replyMsg"></div>' +
+    "</div></div></div>";
+}
+function wireReplyBox() {
+  var ta = document.getElementById("replyText");
+  if (!ta) return;
+  ta.addEventListener("input", function () { replyDraft = ta.value; });
+  if (pendingReplyFocus) {
+    pendingReplyFocus = false;
+    ta.focus();
+  }
+}
+function submitReply() {
+  var text = replyDraft;
+  var parent = threadEff;
+  if (!text.trim() || text.length > 420 || replyPosting || !parent) return;
+  replyPosting = true;
+  var btn = document.getElementById("replyPostBtn");
+  if (btn) { btn.disabled = true; btn.textContent = t().posting; }
+  signAndSubmitAction({ // actions.ts replyAction(): type 0 + parent pointers
+    actionType: 0, text: text,
+    receiverId: parent.user ? parent.user.tokenId : 0,
+    receiverCawonce: parent.cawonce,
+  }).then(function () {
+    replyDraft = "";
+    replyPosting = false;
+    showToast(t().postedOk);
+    var id = state.thread && state.thread.id;
+    if (id) { openThread(id); renderThread(); }
+  }).catch(function (e) {
+    replyPosting = false;
+    var b = document.getElementById("replyPostBtn");
+    if (b) { b.disabled = false; b.textContent = t().replyBtn; }
+    var m = document.getElementById("replyMsg");
+    if (m) { m.textContent = (e && e.message) || t().actFailed; m.classList.remove("hidden"); }
+  });
+}
+
+/* ---------- live like / recaw from post cells ---------- */
+function actTarget(btn, attr) {
+  var id = btn.getAttribute(attr);
+  var eff = postCache[id];
+  if (!eff) return null;
+  if (eff.cawonce == null || !eff.user || eff.user.tokenId == null) {
+    showToast(t().actUnavailable);
+    return null;
+  }
+  return eff;
+}
+function onLikeAct(btn) {
+  if (btn.dataset.busy) return;
+  var eff = actTarget(btn, "data-like");
+  if (!eff) return;
+  var unlike = !!eff.hasLiked; // actions.ts likeAction(): type 1 like / 2 unlike
+  btn.dataset.busy = "1";
+  signAndSubmitAction({
+    actionType: unlike ? 2 : 1,
+    receiverId: eff.user.tokenId,
+    receiverCawonce: eff.cawonce,
+  }).then(function () {
+    eff.hasLiked = !unlike;
+    eff.likeCount = Math.max(0, (eff.likeCount || 0) + (unlike ? -1 : 1));
+    refreshView();
+  }).catch(function (e) {
+    showToast((e && e.message) || t().actFailed);
+  }).finally(function () { delete btn.dataset.busy; });
+}
+function onRecawAct(btn) {
+  if (btn.dataset.busy) return;
+  var eff = actTarget(btn, "data-recaw");
+  if (!eff) return;
+  if (eff.hasRecawed) return; // the protocol app has no un-recaw
+  btn.dataset.busy = "1";
+  signAndSubmitAction({ // actions.ts recawAction(): type 3
+    actionType: 3,
+    receiverId: eff.user.tokenId,
+    receiverCawonce: eff.cawonce,
+  }).then(function () {
+    eff.hasRecawed = true;
+    eff.recawCount = (eff.recawCount || 0) + 1;
+    refreshView();
+  }).catch(function (e) {
+    showToast((e && e.message) || t().actFailed);
+  }).finally(function () { delete btn.dataset.busy; });
+}
+
 /* ---------- node discovery (unchanged behavior) ---------- */
 function probeNode(url) {
   var base = url.replace(/\/+$/, "");
@@ -608,10 +1164,17 @@ function effective(item) {
 function actionsHtml(eff) {
   var id = eff.id;
   var bmOn = isBookmarked(id);
+  var live = !!(sess && hasName());
   var h = '<div class="actions">';
-  h += '<span class="act reply"><span class="ic">' + icon("reply") + "</span><i>" + (eff.commentCount ? fmtCount(eff.commentCount) : "") + "</i></span>";
-  h += '<span class="act recaw' + (eff.hasRecawed ? " on" : "") + '"><span class="ic">' + icon("recaw") + "</span><i>" + (eff.recawCount ? fmtCount(eff.recawCount) : "") + "</i></span>";
-  h += '<span class="act like' + (eff.hasLiked ? " on" : "") + '"><span class="ic">' + icon("heart", !!eff.hasLiked) + "</span><i>" + (eff.likeCount ? fmtCount(eff.likeCount) : "") + "</i></span>";
+  if (live) {
+    h += '<button type="button" class="act reply" data-reply="' + esc(id) + '"><span class="ic">' + icon("reply") + "</span><i>" + (eff.commentCount ? fmtCount(eff.commentCount) : "") + "</i></button>";
+    h += '<button type="button" class="act recaw' + (eff.hasRecawed ? " on" : "") + '" data-recaw="' + esc(id) + '"><span class="ic">' + icon("recaw") + "</span><i>" + (eff.recawCount ? fmtCount(eff.recawCount) : "") + "</i></button>";
+    h += '<button type="button" class="act like' + (eff.hasLiked ? " on" : "") + '" data-like="' + esc(id) + '"><span class="ic">' + icon("heart", !!eff.hasLiked) + "</span><i>" + (eff.likeCount ? fmtCount(eff.likeCount) : "") + "</i></button>";
+  } else {
+    h += '<span class="act reply"><span class="ic">' + icon("reply") + "</span><i>" + (eff.commentCount ? fmtCount(eff.commentCount) : "") + "</i></span>";
+    h += '<span class="act recaw' + (eff.hasRecawed ? " on" : "") + '"><span class="ic">' + icon("recaw") + "</span><i>" + (eff.recawCount ? fmtCount(eff.recawCount) : "") + "</i></span>";
+    h += '<span class="act like' + (eff.hasLiked ? " on" : "") + '"><span class="ic">' + icon("heart", !!eff.hasLiked) + "</span><i>" + (eff.likeCount ? fmtCount(eff.likeCount) : "") + "</i></span>";
+  }
   if (typeof eff.viewCount === "number") {
     h += '<span class="act views"><span class="ic">' + icon("views") + "</span><i>" + fmtCount(eff.viewCount) + "</i></span>";
   } else {
@@ -668,7 +1231,10 @@ function noNodeHtml() {
 }
 function loadingHtml() { return '<div class="state-box center"><p>' + esc(t().loading) + "</p></div>"; }
 function roCardHtml() {
-  return '<div class="ro-card"><span class="ro-badge">' + esc(t().readOnly) + "</span><span>" + esc(t().roNote) + '</span> <a href="' + INTRO_URL + '" target="_blank" rel="noopener">' + esc(t().getApp) + "</a></div>";
+  return '<div class="ro-card"><span class="ro-badge">' + esc(t().readOnly) + "</span><span>" + esc(t().roConnectNote) + '</span> <a href="' + INTRO_URL + '" target="_blank" rel="noopener">' + esc(t().getApp) + "</a></div>";
+}
+function noNameCardHtml() {
+  return '<div class="ro-card"><span>' + esc(t().noNameNote) + '</span> <a href="' + INTRO_URL + '" target="_blank" rel="noopener">' + esc(t().getName) + "</a></div>";
 }
 function gateHtml() {
   if (!state.discovered) return loadingHtml();
@@ -682,7 +1248,10 @@ function renderHome() {
   var gate = gateHtml();
   if (gate) { el.innerHTML = gate; return; }
   var f = state.feed;
-  var html = roCardHtml();
+  var html = "";
+  if (sess && hasName()) html += composeHtml();
+  else if (sess) html += noNameCardHtml();
+  else html += roCardHtml();
   if (f.error && !f.items.length) html += '<div class="state-box center"><p class="err">' + esc(t().feedErr) + "</p></div>";
   else if (!f.items.length && !f.loading) html += '<div class="state-box center"><p>' + esc(t().noPosts) + "</p></div>";
   else html += f.items.map(postHtml).join("");
@@ -690,6 +1259,7 @@ function renderHome() {
     html += '<button class="showmore" id="feedMore" type="button"' + (f.loading ? " disabled" : "") + ">" + esc(f.loading ? t().loading : t().loadMore) + "</button>";
   }
   el.innerHTML = html;
+  wireCompose();
 }
 function loadFeed(more) {
   if (!state.node || state.feed.loading) return;
@@ -817,12 +1387,15 @@ function renderThread() {
   h += '<div class="thread-meta">' + metaHtml + "</div>";
   h += actionsHtml(caw);
   h += "</div>";
+  threadEff = caw;
+  if (sess && hasName()) h += replyBoxHtml();
   if (!th.comments.length && !th.loading) h += '<div class="state-box center"><p>' + esc(t().noReplies) + "</p></div>";
   else h += th.comments.map(postHtml).join("");
   if (th.comments.length && th.hasMore) {
     h += '<button class="showmore" id="threadMore" type="button"' + (th.loading ? " disabled" : "") + ">" + esc(th.loading ? t().loading : t().loadMore) + "</button>";
   }
   el.innerHTML = h;
+  wireReplyBox();
 }
 function loadThread(id, more) {
   var th = state.thread;
@@ -977,6 +1550,7 @@ function syncChrome() {
     a.classList.toggle("on", a.getAttribute("data-nav") === r.name);
   });
   renderNodeBox();
+  renderSessionUI();
 }
 function renderNodeBox() {
   var box = document.getElementById("nodeBox");
@@ -1035,6 +1609,7 @@ function doToggleLang() {
   applyStaticTexts();
   applyRoute();
   renderRailNames();
+  renderSessionUI();
 }
 function doToggleTheme() {
   var rootEl = document.documentElement;
@@ -1087,6 +1662,36 @@ document.getElementById("railNames").addEventListener("click", function (e) {
 });
 document.addEventListener("click", function (e) {
   if (e.target.closest("a")) return; // let real links (incl. linkified URLs) work
+  if (e.target.closest("[data-connect]")) { connectWallet(); return; }
+  if (e.target.closest("[data-disconnect]")) { disconnectWallet(); return; }
+  if (e.target.closest("[data-focus-compose]")) {
+    closeDrawer();
+    if (state.route.name !== "home") location.hash = "#/";
+    setTimeout(function () {
+      var ta = document.getElementById("composeText");
+      if (ta) ta.focus();
+    }, 60);
+    return;
+  }
+  if (e.target.closest("#composePostBtn")) { submitCompose(); return; }
+  if (e.target.closest("#replyPostBtn")) { submitReply(); return; }
+  var lk = e.target.closest("[data-like]");
+  if (lk) { e.stopPropagation(); onLikeAct(lk); return; }
+  var rc = e.target.closest("[data-recaw]");
+  if (rc) { e.stopPropagation(); onRecawAct(rc); return; }
+  var rp = e.target.closest("[data-reply]");
+  if (rp) {
+    e.stopPropagation();
+    var rid = rp.getAttribute("data-reply");
+    if (state.route.name === "thread" && threadEff && String(threadEff.id) === String(rid)) {
+      var rt = document.getElementById("replyText");
+      if (rt) rt.focus();
+    } else {
+      pendingReplyFocus = true;
+      location.hash = "#/post/" + encodeURIComponent(rid);
+    }
+    return;
+  }
   var bm = e.target.closest("[data-bookmark]");
   if (bm) {
     e.stopPropagation();
@@ -1136,6 +1741,11 @@ function boot() {
     if (node) {
       if (!state.feed.items.length) loadFeed(false);
       loadNames();
+      if (!sess && restoreSess(node)) {
+        renderSessionUI();
+        loadSessUser().then(function () { renderSessionUI(); refreshView(); });
+        fetchValidatorTip().catch(function () {});
+      }
     }
   });
 }
