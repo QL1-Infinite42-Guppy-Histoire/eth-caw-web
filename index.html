@@ -283,7 +283,9 @@
   .mirror-item.hl { background: var(--tint-blue); }
   .mi-text { white-space: pre-wrap; word-break: break-word; font-size: 15px; line-height: 20px; }
   .mi-meta { color: var(--muted); font-size: 13px; margin-top: 6px; display: flex; gap: 14px; }
-  .mi-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .mi-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .mi-badge { border: 1px solid var(--border-strong); border-radius: 999px; padding: 0 8px; font-size: 12px; line-height: 18px; }
+  .mirror-card select { border: 1px solid var(--border-strong); background: var(--bg); color: var(--text); border-radius: 10px; padding: 8px 10px; font: inherit; font-size: 14px; outline: none; }
   .sec-head { display: flex; align-items: center; justify-content: space-between; padding-right: 16px; }
   .sec-head .showmore { width: auto; border-bottom: none; padding: 10px 0; }
 
@@ -523,6 +525,15 @@ var STRINGS = {
     mirrorTruncated: "Shortened to fit the 420-character limit — check it in the compose box before posting.",
     mirrorLoadErr: "Could not load the inbox.",
     mirrorReload: "Reload",
+    mirrorTargetLabel: "Destination",
+    mirrorTargetEth: "ETH CAW",
+    mirrorTargetQl1: "QL1 CAW",
+    mirrorTargetAny: "Both",
+    mirrorBadgeEth: "ETH",
+    mirrorBadgeQl1: "QL1",
+    mirrorBadgeAny: "ETH + QL1",
+    mirrorOpenQl1: "Open in QL1",
+    mirrorAdded: "Added to the inbox.",
     sourceLink: "Source ↗",
     navMint: "Mint a name",
     mintTitle: "Get a name",
@@ -638,6 +649,15 @@ var STRINGS = {
     mirrorTruncated: "420字に収まるよう短縮しました。投稿前に投稿欄で確認してください。",
     mirrorLoadErr: "受信箱を読み込めませんでした。",
     mirrorReload: "再読み込み",
+    mirrorTargetLabel: "投稿先",
+    mirrorTargetEth: "ETH版CAW",
+    mirrorTargetQl1: "QL1版CAW",
+    mirrorTargetAny: "両方",
+    mirrorBadgeEth: "ETH",
+    mirrorBadgeQl1: "QL1",
+    mirrorBadgeAny: "ETH + QL1",
+    mirrorOpenQl1: "QL1版で開く",
+    mirrorAdded: "受信箱に追加しました。",
     sourceLink: "元の投稿 ↗",
     navMint: "名前を発行",
     mintTitle: "名前を取る",
@@ -1803,6 +1823,9 @@ var MIRROR = {
   baseUrl: "https://eth-caw-mirror.nepicobsv.workers.dev",
   vapidPublicKey: "BJzw7HGeE9osCIENYC5VUSOms5iP0MDzilPaDm33Z8yjd_FItFjbGDj2kN7OPsgYfenImTCs_qvIpgZtcgslLXk",
 };
+// Deep link into the QL1 viewer's mirror inbox (same shared inbox on
+// the Worker; its root gate preserves the query into en.html/ja.html).
+var QL1_MIRROR_URL = "https://ql1-infinite42-guppy-histoire.github.io/caw-social-ql1/?mirror=1&item=";
 var MIRROR_TOKEN_KEY = "ethcaw-mirror-token";
 var mirrorState = { items: null, loading: false, error: false };
 var mirrorItemsById = {};
@@ -1858,15 +1881,21 @@ function loadMirrorPending() {
 }
 function mirrorItemHtml(item) {
   var hl = state.route.id && String(state.route.id) === String(item.id);
+  // Items stored before targets existed have no target: they are "any".
+  var tgt = item.target === "eth" || item.target === "ql1" ? item.target : "any";
   var h = '<div class="mirror-item' + (hl ? " hl" : "") + '" data-mirror-item="' + esc(item.id) + '">';
   h += '<div class="mi-text">' + linkify(item.text || "") + "</div>";
   h += '<div class="mi-meta">';
+  h += '<span class="mi-badge">' + esc(tgt === "ql1" ? t().mirrorBadgeQl1 : tgt === "eth" ? t().mirrorBadgeEth : t().mirrorBadgeAny) + "</span>";
   if (item.sourceUrl) h += '<a href="' + esc(item.sourceUrl) + '" target="_blank" rel="noopener nofollow">' + esc(t().sourceLink) + "</a>";
   var tm = mirrorTime(item);
   if (tm) h += "<span>" + esc(tm) + "</span>";
   h += "</div>";
-  h += '<div class="mi-actions"><button type="button" class="postbtn sm" data-mirror-post="' + esc(item.id) + '">' + esc(t().mirrorPost) + "</button>" +
-    '<button type="button" class="ghostbtn" data-mirror-dismiss="' + esc(item.id) + '">' + esc(t().mirrorDismiss) + "</button></div>";
+  h += '<div class="mi-actions"><button type="button" class="postbtn sm" data-mirror-post="' + esc(item.id) + '">' + esc(t().mirrorPost) + "</button>";
+  if (tgt !== "eth") {
+    h += '<button type="button" class="ghostbtn" data-mirror-ql1="' + esc(item.id) + '">' + esc(t().mirrorOpenQl1) + "</button>";
+  }
+  h += '<button type="button" class="ghostbtn" data-mirror-dismiss="' + esc(item.id) + '">' + esc(t().mirrorDismiss) + "</button></div>";
   h += "</div>";
   return h;
 }
@@ -1895,6 +1924,10 @@ function renderMirror() {
   h += '<div class="mirror-card"><h3>' + esc(t().manualTitle) + "</h3>" +
     '<textarea id="mirrorManualText" rows="4" placeholder="' + esc(t().manualTextPh) + '"></textarea>' +
     '<input class="manual-url" id="mirrorManualUrl" type="url" placeholder="' + esc(t().manualUrlPh) + '">' +
+    '<div class="row-actions"><label class="sess-note" for="mirrorManualTarget">' + esc(t().mirrorTargetLabel) + '</label>' +
+    '<select id="mirrorManualTarget"><option value="eth">' + esc(t().mirrorTargetEth) + '</option>' +
+    '<option value="ql1">' + esc(t().mirrorTargetQl1) + '</option>' +
+    '<option value="any">' + esc(t().mirrorTargetAny) + '</option></select></div>' +
     '<div class="row-actions"><button type="button" class="postbtn sm" data-mirror-manual>' + esc(t().manualBtn) + '</button>' +
     '<span class="sess-note err hidden" id="mirrorManualMsg"></span></div></div>';
   // pending list
@@ -1937,17 +1970,39 @@ function onMirrorManual() {
   var text = (document.getElementById("mirrorManualText").value || "").trim();
   var url = (document.getElementById("mirrorManualUrl").value || "").trim();
   var msg = document.getElementById("mirrorManualMsg");
+  var targetEl = document.getElementById("mirrorManualTarget");
+  var target = targetEl ? targetEl.value : "eth";
   if (!text) {
     if (msg) { msg.textContent = url ? t().manualUrlOnly : t().manualEmpty; msg.classList.remove("hidden"); }
     return;
   }
-  prefillCompose(text);
-  mirrorDoneAfterPost = null;
-  location.hash = "#/";
-  setTimeout(function () {
-    var ta = document.getElementById("composeText");
-    if (ta) ta.focus();
-  }, 80);
+  var openCompose = function () {
+    prefillCompose(text);
+    mirrorDoneAfterPost = null;
+    location.hash = "#/";
+    setTimeout(function () {
+      var ta = document.getElementById("composeText");
+      if (ta) ta.focus();
+    }, 80);
+  };
+  // ETH destination: the original local flow, unchanged — the text
+  // goes straight into this viewer's composer, nothing is stored.
+  if (target === "eth") { openCompose(); return; }
+  // QL1 / both: store the item in the shared inbox with its target so
+  // the QL1 viewer (and its push subscribers) can pick it up. "Both"
+  // also opens this viewer's composer, as before; the inbox item
+  // stays pending for the QL1 side (/done is global, so it is only
+  // marked done from a view where a post actually lands).
+  if (!mirrorToken()) { showToast(t().mirrorNeedToken); return; }
+  mirrorFetch("/pending", { method: "POST", body: { text: text, sourceUrl: url || null, target: target } }).then(function () {
+    showToast(t().mirrorAdded);
+    if (target === "any") { openCompose(); return; }
+    mirrorState.items = null;
+    renderMirror();
+    loadMirrorPending();
+  }).catch(function () {
+    if (msg) { msg.textContent = t().mirrorLoadErr; msg.classList.remove("hidden"); }
+  });
 }
 function urlB64ToUint8Array(b64) {
   var pad = "=".repeat((4 - (b64.length % 4)) % 4);
@@ -1965,7 +2020,7 @@ function onMirrorNotify() {
       return navigator.serviceWorker.ready.then(function (reg) {
         return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8Array(key) });
       }).then(function (sub) {
-        return mirrorFetch("/subscribe", { method: "POST", body: { subscription: sub.toJSON ? sub.toJSON() : sub } });
+        return mirrorFetch("/subscribe", { method: "POST", body: { subscription: sub.toJSON ? sub.toJSON() : sub, target: "eth" } });
       }).then(function () { renderMirror(); });
     });
   }).catch(function () { showToast(t().mirrorNotifyDenied); });
@@ -2584,6 +2639,8 @@ document.addEventListener("click", function (e) {
   if (mp) { onMirrorPost(mp); return; }
   var md = e.target.closest("[data-mirror-dismiss]");
   if (md) { onMirrorDismiss(md); return; }
+  var mq = e.target.closest("[data-mirror-ql1]");
+  if (mq) { window.open(QL1_MIRROR_URL + encodeURIComponent(mq.getAttribute("data-mirror-ql1")), "_blank", "noopener"); return; }
   var lk = e.target.closest("[data-like]");
   if (lk) { e.stopPropagation(); onLikeAct(lk); return; }
   var rc = e.target.closest("[data-recaw]");
