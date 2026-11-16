@@ -1399,16 +1399,32 @@ function callAllowance(owner, spender) { return SEL_ALLOWANCE + abiAddr(owner) +
 function callApprove(spender, amount) { return SEL_APPROVE + abiAddr(spender) + abiWord(amount); }
 
 function l1Rpc(method, params) {
-  return fetch(L1_RPC_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: method, params: params }),
-  }).then(function (r) { return r.json(); }).then(function (j) {
-    if (!j || (j.result == null && method !== "eth_getTransactionReceipt")) {
-      throw new Error((j && j.error && j.error.message) || "L1 read failed");
-    }
-    return j.result;
-  });
+  var attempt = 0;
+  // The free public RPC rate-limits bursts (-32005 "Rate limit exceeded"):
+  // one such answer used to fail the whole read. Retry transient failures
+  // (rate limit / 429 / network) with backoff; real errors (e.g. an
+  // eth_call revert) still surface at once. Receipt polling keeps its
+  // own loop in waitReceipt(), so it is excluded here.
+  function transient(msg) { return /rate limit|too many requests|429|-32005|failed to fetch|network|timed? ?out/i.test(msg || ""); }
+  function once() {
+    return fetch(L1_RPC_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: method, params: params }),
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      if (!j || (j.result == null && method !== "eth_getTransactionReceipt")) {
+        throw new Error((j && j.error && j.error.message) || "L1 read failed");
+      }
+      return j.result;
+    }).catch(function (e) {
+      if (method !== "eth_getTransactionReceipt" && attempt < 3 && transient(e && e.message)) {
+        attempt++;
+        return new Promise(function (res) { setTimeout(res, 900 * attempt); }).then(once);
+      }
+      throw e;
+    });
+  }
+  return once();
 }
 function l1Call(to, data) { return l1Rpc("eth_call", [{ to: to, data: data }, "latest"]); }
 function fmtEth(w) { return (Number(w) / 1e18).toFixed(5); } // display only, mirrors the app
